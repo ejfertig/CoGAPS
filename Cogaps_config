@@ -1,0 +1,19 @@
+[common]
+nFactor=7
+datafile=GIST2.txt
+variancefile=GIST2Unc.txt 
+simulation_id=crocodile
+nEquil = 500
+nSample = 500
+
+
+[A]
+alphaA=0.01
+nIterA=10
+nMaxA = 100000
+
+[P]
+alphaP=0.01
+nIterP=10
+nMaxP = 100000
+ 
