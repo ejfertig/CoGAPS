@@ -1,0 +1,19 @@
+[common]
+nFactor=2
+datafile=simp.txt
+variancefile=simpSig.txt 
+simulation_id=runname
+nEquil = 100
+nSample = 100
+
+
+[A]
+alphaA=0.01
+nIterA=50
+nMaxA = 100000
+
+[P]
+alphaP=0.01
+nIterP=50
+nMaxP = 100000
+ 
