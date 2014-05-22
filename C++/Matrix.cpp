@@ -113,7 +113,7 @@ void Matrix::born_matrix(unsigned int row_size,unsigned int col_size,
 void Matrix::matrix_init() {
     for(int m=0;m<_n_row;++m) {
         for (int n=0; n<_n_col;++n) {        
-            _Matrix[m][n] = 0.;
+	  _Matrix[m][n] = 0.;  // for normal operation of Cogaps
         }
     }
 }
@@ -135,6 +135,31 @@ unsigned int Matrix::get_nCol() const {
 unsigned int Matrix::get_length() const {
   return _length;
 }
+
+double Matrix::get_max_given_row(unsigned int row_indx){
+  return *std::max_element(_Matrix[row_indx],_Matrix[row_indx]+_n_col);
+}
+
+double Matrix::get_min_given_row(unsigned int row_indx){
+  return *std::min_element(_Matrix[row_indx],_Matrix[row_indx]+_n_col);
+}
+
+double Matrix::get_max_given_col(unsigned int col_indx){
+  vector<double> col_vec(_n_row,0.0);
+  for (unsigned int m=0; m<_n_row; ++m){
+    col_vec[m] = _Matrix[m][col_indx];
+  }
+  return *std::max_element(col_vec.begin(),col_vec.end());
+}
+
+double Matrix::get_min_given_col(unsigned int col_indx){
+  vector<double> col_vec(_n_row,0.0);
+  for (unsigned int m=0; m<_n_row; ++m){
+    col_vec[m] = _Matrix[m][col_indx];
+  }
+  return *std::min_element(col_vec.begin(),col_vec.end());
+}
+
 
   // ********************* OTHER METHODS *****************************************
 // get the mean value of all matrix elements

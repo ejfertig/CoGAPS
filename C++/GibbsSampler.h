@@ -28,7 +28,11 @@ class GibbsSampler
   double _nMaxP;             // number of atomic bins for P
   unsigned long _nIterA;    // initial # of inner-loop iterations for A 
   unsigned long _nIterP ;    // initial # of inner-loop iterations for P 
-
+  string _simulation_id;   // simulation id for the run
+  double _max_gibbsmass_paraA; // max gibbs mass parameter for A
+  double _max_gibbsmass_paraP; // max gibbs mass parameter for P
+  double _lambdaA_scale_factor; // factor to rescale _lambdaA
+  double _lambdaP_scale_factor; // factor to rescale _lambdaP
 
   // Parameters or structures to be calculated or constructed:
   unsigned int _nRow;       // number of items in observation (= # of genes)
@@ -37,6 +41,8 @@ class GibbsSampler
   unsigned int _nBinsP;     // number of atomic bins for P
   double _lambdaA;
   double _lambdaP;
+  double _max_gibbsmassA;  // max gibbs mass for A
+  double _max_gibbsmassP;  // max gibbs mass for P
   unsigned long _atomicSize; // number of atomic points
 
   char _label_A;  // label for matrix A
@@ -85,9 +91,13 @@ class GibbsSampler
 
   GibbsSampler(unsigned long nEquil, unsigned long nSample, unsigned int nFactor, 
 	       double alphaA, double alphaP, double nMaxA, double nMaxP,
-	       unsigned long nIterA, unsigned long nIterP, unsigned long atomicSize,
+	       unsigned long nIterA, unsigned long nIterP, 
+	       double max_gibbsmass_paraA, double max_gibbsmass_paraP, 
+	       double lambdaA_scale_factor, double lambdaP_scale_factor, 
+               unsigned long atomicSize,
 	       char label_A,char label_P,char label_D,char label_S,
-	       const string & datafile, const string & variancefile);
+	       const string & datafile, const string & variancefile,
+               const string & simulation_id);
 
   ~GibbsSampler(){};
 
@@ -196,7 +206,13 @@ class GibbsSampler
 
   void compute_statistics_prepare_matrices(unsigned long statindx);
 
-  void compute_statistics(char outputFilename[],unsigned int Nstat);
+  void compute_statistics(char outputFilename[],
+                          char outputAmean_Filename[],char outputAsd_Filename[],
+                          char outputPmean_Filename[],char outputPsd_Filename[],
+			  char outputAPmean_Filename[],
+                          unsigned int Nstat);
+
+
 
   // --------------------------------------------------------------------------- 
   // Adapt directly from old codes:
@@ -217,6 +233,10 @@ class GibbsSampler
 		 double const * const * D, double const * const * S,
 		 double rng);
   // ---------------------------------------------------------------------------
+
+  void detail_check(char outputchi2_Filename[]);
+
+
 
 };
 #endif

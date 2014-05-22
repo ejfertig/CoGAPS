@@ -57,10 +57,11 @@ public:
   string simulation_id;
   //all the values until here are obligatory
   unsigned long nEquil, nSample;
-  unsigned long long max_atoms;
-  double alphaA,alphaP,epsilon;
+  double alphaA,alphaP;
   double nMaxA,nMaxP;
   unsigned long nIterA, nIterP;
+  double max_gibbsmass_paraA, max_gibbsmass_paraP;
+  double lambdaA_scale_factor, lambdaP_scale_factor;
  	
   //	Cogaps_options_class(int ac, char* av[]) throw(exception,genes_exception):
   Cogaps_options_class(int ac, char* av[]):
@@ -71,6 +72,7 @@ public:
     unsig_long_max = std::numeric_limits<unsigned long>::max(); 
     description.add_options()
       ("help", "produce help message")
+
       // ---- OBLIGATORY arguments! Must be in!!!! -----------------------------
       ("common.nFactor,F", boost::program_options::value<unsigned int>(&nFactor), 
        "#of patterns")
@@ -80,25 +82,35 @@ public:
        "name of the sigma file")
       ("common.simulation_id", boost::program_options::value<string>(&simulation_id), 
        "unique id of the program run")
+
       // ------ NON-OBLIGATORY arguments! If not in, default will be used! -----
       ("common.nEquil,E", boost::program_options::value<unsigned long>(&nEquil)->default_value(500000000ul), 
        "number of iterations to equilibrium")
       ("common.nSample,S", boost::program_options::value<unsigned long>(&nSample)->default_value(unsig_long_max), 
        "maximal number of iterations")
+
       ("A.alphaA", boost::program_options::value<double>(&alphaA)->default_value(0.01), 
        "prior sparsity of A matrix")
       ("A.nMaxA", boost::program_options::value<double>(&nMaxA)->default_value(unsig_long_max),
        "Max Number of atoms in atomic space A")
       ("A.nIterA", boost::program_options::value<unsigned long>(&nIterA)->default_value(100000),
        "Number of iterations for updating A")
+      ("A.max_gibbsmass_paraA", boost::program_options::value<double>(&max_gibbsmass_paraA)->default_value(100.0),
+       "Max gibbsmass parameter for A")
+      ("A.lambdaA_scale_factor", boost::program_options::value<double>(&lambdaA_scale_factor)->default_value(1.0),
+       "scale parameter for lambdaA")
+
       ("P.alphaP", boost::program_options::value<double>(&alphaP)->default_value(0.01), 
        "prior sparsity of P matrix")
       ("P.nMaxP", boost::program_options::value<double>(&nMaxP)->default_value(unsig_long_max),
        "Max Number of atoms in atomic space P")
       ("P.nIterP", boost::program_options::value<unsigned long>(&nIterP)->default_value(100000),
        "Number of iterations for updating P")
-      //("constants.epsilon,e", boost::program_options::value<double>(&epsilon)->default_value(1e-10), 
-      //"the minimal difference for nonequal doubles")
+      ("P.max_gibbsmass_paraP", boost::program_options::value<double>(&max_gibbsmass_paraP)->default_value(100.0),
+       "Max gibbsmass parameter for P")
+      ("P.lambdaP_scale_factor", boost::program_options::value<double>(&lambdaP_scale_factor)->default_value(1.0),
+       "scale parameter for lambdaP")
+
       ("config-file", boost::program_options::value<string>(), 
        "configuration file name")
       // -------------------------------------------------------------------------------------------------------
@@ -196,16 +208,17 @@ ostream & operator << (ostream & o, const Cogaps_options_class & options)
     "[A]"<<endl<<
     "alphaA="<<options.alphaA<<endl<<
     "nMaxA="<< options.nMaxA << endl <<
-    "nIterA="<< options.nIterA << endl << endl <<
+    "nIterA="<< options.nIterA << endl <<
+    "max_gibbsmass_paraA="<< options.max_gibbsmass_paraA << endl <<
+    "lambdaA_scale_factor =" << options.lambdaA_scale_factor << endl << endl <<
 
     "[P]"<<endl<<
     "alphaP="<<options.alphaP<<endl<<
     "nMaxP="<< options.nMaxP << endl <<
-    // "nIterP="<< options.nIterP << endl << endl <<
-    "nIterP="<< options.nIterP << endl << endl;
-
-    // "[constants]"<<endl<<
-    //"epsilon="<<options.epsilon<<endl;
+    "nIterP="<< options.nIterP << endl <<
+    "max_gibbsmass_paraP="<< options.max_gibbsmass_paraP << endl <<
+    "lambdaP_scale_factor =" << options.lambdaP_scale_factor << endl << endl;  
+ 
   return o;
 }
 #endif // _COGAPS_OPTIONS_HPP_

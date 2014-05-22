@@ -39,7 +39,7 @@ int main(int ac, char* av[]){
       Cogaps_options.help(cout);
       return 0;
     }
-    // cout << Cogaps_options; 
+    //cout << Cogaps_options; 
   } 
   catch( const exception & e) {
     cerr <<e.what()<<endl;
@@ -78,9 +78,17 @@ int main(int ac, char* av[]){
   double nMaxP = Cogaps_options.nMaxP;             // number of atomic bins for P
   string datafile = Cogaps_options.datafile;        // File for D
   string variancefile = Cogaps_options.variancefile; // File for S
+  string simulation_id = Cogaps_options.simulation_id; // simulation id
   unsigned long nIterA = Cogaps_options.nIterA;    // initial # of inner-loop iterations for A 
   unsigned long nIterP = Cogaps_options.nIterP;    // initial # of inner-loop iterations for P 
-
+  double max_gibbsmass_paraA = Cogaps_options.max_gibbsmass_paraA; 
+                           // maximum gibbs mass parameter for A 
+  double max_gibbsmass_paraP = Cogaps_options.max_gibbsmass_paraP; 
+                           // maximum gibbs mass parameter for P 
+  double lambdaA_scale_factor = Cogaps_options.lambdaA_scale_factor;
+                           // scale factor for lambdaA
+  double lambdaP_scale_factor = Cogaps_options.lambdaP_scale_factor;
+                           // scale factor for lambdaP
 
   // Parameters or structures to be calculated or constructed:
   unsigned int nRow;       // number of items in observation (= # of genes)
@@ -100,13 +108,18 @@ int main(int ac, char* av[]){
   char label_S = 'S';// label for matrix S
 
   // Output parameters and computing info to files:
-  char outputFilename[] = "Computing_info.txt";
+  char outputFilename[80];
+  strcpy(outputFilename,simulation_id.c_str());
+  strcat(outputFilename,"_computing_info.txt");
+  
+
   ofstream outputFile;
   outputFile.open(outputFilename,ios::out);  // start by deleting previous content and 
                                              // rewriting the file
   outputFile << "Common parameters and info:" << endl;
   outputFile << "input data file: " << datafile << endl;
   outputFile << "input variance file: " << variancefile << endl;
+  outputFile << "simulation id: " << simulation_id << endl;
   outputFile << "nFactor = " << nFactor << endl;
   outputFile << "nEquil = " << nEquil << endl;
   outputFile << "nSample = " << nSample << endl << endl;
@@ -114,12 +127,16 @@ int main(int ac, char* av[]){
   outputFile << "Parameters for A:" << endl;
   outputFile << "alphaA = " << alphaA << endl;
   outputFile << "nMaxA = " << nMaxA << endl;
-  outputFile << "nIterA = " << nIterA << endl << endl;
+  outputFile << "nIterA = " << nIterA << endl;
+  outputFile << "max_gibbsmass_paraA = " << max_gibbsmass_paraA << endl;
+  outputFile << "lambdaA_scale_factor = " << lambdaA_scale_factor << endl << endl;
 
   outputFile << "Parameters for P:" << endl;
   outputFile << "alphaP = " << alphaP << endl;
   outputFile << "nMaxP = " << nMaxP << endl;
-  outputFile << "nIterP = " << nIterP << endl << endl;
+  outputFile << "nIterP = " << nIterP << endl;
+  outputFile << "max_gibbsmass_paraP = " << max_gibbsmass_paraP << endl;
+  outputFile << "lambdaP_scale_factor = " << lambdaP_scale_factor << endl << endl;
 
   outputFile.close();
 
@@ -130,9 +147,12 @@ int main(int ac, char* av[]){
 
   GibbsSampler GibbsSamp(nEquil,nSample,nFactor,   // construct GibbsSampler and 
                          alphaA,alphaP,nMaxA,nMaxP,// Read in D and S matrices
-                         nIterA,nIterP,atomicSize,
+                         nIterA,nIterP,
+			 max_gibbsmass_paraA, max_gibbsmass_paraP, 
+			 lambdaA_scale_factor, lambdaP_scale_factor,
+                         atomicSize,
                          label_A,label_P,label_D,label_S,
-			 datafile,variancefile);
+			 datafile,variancefile,simulation_id);
 
   // ---------------------------------------------------------------------------
   // Based on the information of D, construct and initialize for A and P both 
@@ -143,13 +163,25 @@ int main(int ac, char* av[]){
                                                     // A and P
 
   // ===========================================================================
-  // Part 2) Equlibration:
+  // Part 2) Equilibration:
   // In this section, we let the system eqilibrate with nEquil outer loop 
   // iterations. Within each outer loop iteration, A is iterated nIterA times 
   // and P is iterated nIterP times. After equilibration, we update nIterA and 
   // nIterP according to the expected number of atoms in the atomic spaces 
   // of A and P respectively.
   // ===========================================================================
+  
+      // --------- temp for initializing output to chi2.txt
+      char outputchi2_Filename[80];
+      strcpy(outputchi2_Filename,simulation_id.c_str());
+      strcat(outputchi2_Filename,"_chi2.txt");
+      ofstream outputchi2_File;
+      outputchi2_File.open(outputchi2_Filename,ios::out);
+      outputchi2_File << "chi2" << endl;
+      outputchi2_File.close();
+      // --------------
+      
+
 
   double chi2;
 
@@ -162,17 +194,19 @@ int main(int ac, char* av[]){
     for (unsigned long iterA=1; iterA <= nIterA; ++iterA){
       GibbsSamp.update('A');
       //GibbsSamp.check_atomic_matrix_consistency('A');
+      //GibbsSamp.detail_check(outputchi2_Filename);
     }
     GibbsSamp.check_atomic_matrix_consistency('A');
 
     for (unsigned long iterP=1; iterP <= nIterP; ++iterP){
       GibbsSamp.update('P');
       //GibbsSamp.check_atomic_matrix_consistency('P');
+      // GibbsSamp.detail_check(outputchi2_Filename);
     }
     GibbsSamp.check_atomic_matrix_consistency('P');
 
     // ----------- output computing info ---------
-    if ( ext_iter % (unsigned long)floor(nEquil/20) == 0){
+    if ( ext_iter % (unsigned long)floor(nEquil/150) == 0){
       chi2 = 2.*GibbsSamp.cal_logLikelihood();
       GibbsSamp.output_computing_info(outputFilename,ext_iter,nEquil,0,nSample,chi2);
       cout << "Equil: " << ext_iter << " of " << nEquil << 
@@ -203,11 +237,14 @@ int main(int ac, char* av[]){
   // the atomic spaces of A and P respectively.
   // ===========================================================================
   
+
+
   unsigned int statindx = 0;
   for (unsigned long i=1; i <= nSample; ++i){
     for (unsigned long iterA=1; iterA <= nIterA; ++iterA){
       GibbsSamp.update('A');
       //GibbsSamp.check_atomic_matrix_consistency('A');
+      //GibbsSamp.detail_check(outputchi2_Filename);
     }
     GibbsSamp.output_atomicdomain('A',i);
     GibbsSamp.check_atomic_matrix_consistency('A');
@@ -215,6 +252,7 @@ int main(int ac, char* av[]){
     for (unsigned long iterP=1; iterP <= nIterP; ++iterP){ 
       GibbsSamp.update('P');
       //GibbsSamp.check_atomic_matrix_consistency('P');
+      //GibbsSamp.detail_check(outputchi2_Filename);
     }
     GibbsSamp.output_atomicdomain('P',i);
     GibbsSamp.check_atomic_matrix_consistency('P');
@@ -254,8 +292,33 @@ int main(int ac, char* av[]){
   // sample and check the results.
   // ===========================================================================
 
+  char outputAmean_Filename[80];
+  strcpy(outputAmean_Filename,simulation_id.c_str());
+  strcat(outputAmean_Filename,"_Amean.txt");
 
-  GibbsSamp.compute_statistics(outputFilename,statindx);          // compute statistics like mean and s.d.
+  char outputAsd_Filename[80];
+  strcpy(outputAsd_Filename,simulation_id.c_str());
+  strcat(outputAsd_Filename,"_Asd.txt");
+
+  char outputPmean_Filename[80];
+  strcpy(outputPmean_Filename,simulation_id.c_str());
+  strcat(outputPmean_Filename,"_Pmean.txt");
+
+  char outputPsd_Filename[80];
+  strcpy(outputPsd_Filename,simulation_id.c_str());
+  strcat(outputPsd_Filename,"_Psd.txt");
+
+  char outputAPmean_Filename[80];
+  strcpy(outputAPmean_Filename,simulation_id.c_str());
+  strcat(outputAPmean_Filename,"_APmean.txt");
+
+
+
+  GibbsSamp.compute_statistics(outputFilename,
+                               outputAmean_Filename,outputAsd_Filename,
+			       outputPmean_Filename,outputPsd_Filename,
+			       outputAPmean_Filename,
+                               statindx);          // compute statistics like mean and s.d.
   
 
   return 0;

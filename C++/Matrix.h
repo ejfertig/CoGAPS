@@ -10,6 +10,7 @@
 #include <vector>
 #include <cmath>
 #include <boost/tuple/tuple.hpp>
+#include <algorithm>
 
 using namespace std;
 
@@ -52,6 +53,14 @@ class Matrix
   unsigned int get_nCol() const;
 
   unsigned int get_length() const;
+
+  double get_max_given_row(unsigned int row_indx);
+
+  double get_min_given_row(unsigned int row_indx);
+
+  double get_max_given_col(unsigned int col_indx);
+
+  double get_min_given_col(unsigned int col_indx);
 
   // ********************* OTHER METHODS *****************************************
   // cal_mean calculates the mean of a matrix over all its entries.

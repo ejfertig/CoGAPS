@@ -1,19 +1,22 @@
 [common]
 nFactor=2
-datafile=simp.txt
-variancefile=simpSig.txt 
-simulation_id=runname
-nEquil = 100
-nSample = 100
+datafile=Data2.txt
+variancefile=Noise2.txt 
+simulation_id=Data2_Noise2_test5
+nEquil = 2000
+nSample = 2000
 
 
 [A]
 alphaA=0.01
-nIterA=50
+nIterA=10
 nMaxA = 100000
+max_gibbsmass_paraA = 100.0
+lambdaA_scale_factor = 1.0
 
 [P]
-alphaP=0.01
-nIterP=50
+alphaP=0.1
+nIterP=10
 nMaxP = 100000
- 
+max_gibbsmass_paraP = 100.0
+lambdaP_scale_factor = 1.0

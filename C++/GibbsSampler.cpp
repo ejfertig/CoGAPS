@@ -12,7 +12,7 @@ using std::vector;
 unsigned long atomicSize = std::numeric_limits<unsigned long>::max();  
 const double DOUBLE_POSINF = std::numeric_limits<double>::max();
 const double DOUBLE_NEGINF = -std::numeric_limits<double>::max();
-const double epsilon = 1e-20;
+const double epsilon = 1e-10;
 // -----------------------------------------------------------------------------
 
 
@@ -20,9 +20,13 @@ const double epsilon = 1e-20;
 // ******************** CONSTRUCTOR ********************************************
 GibbsSampler:: GibbsSampler(unsigned long nEquil, unsigned long nSample, unsigned int nFactor, 
 			    double alphaA, double alphaP, double nMaxA, double nMaxP,
-			    unsigned long nIterA, unsigned long nIterP, unsigned long atomicSize,
+			    unsigned long nIterA, unsigned long nIterP, 
+                            double max_gibbsmass_paraA, double max_gibbsmass_paraP,
+                            double lambdaA_scale_factor, double lambdaP_scale_factor,
+                            unsigned long atomicSize,
 			    char label_A,char label_P,char label_D,char label_S,
-			    const string & datafile, const string & variancefile)
+			    const string & datafile, const string & variancefile,
+                            const string & simulation_id)
   :_DMatrix(datafile.c_str(),label_D),
    _SMatrix(variancefile.c_str(),label_S){
  
@@ -35,6 +39,11 @@ GibbsSampler:: GibbsSampler(unsigned long nEquil, unsigned long nSample, unsigne
   _nMaxP = nMaxP;
   _nIterA = nIterA;
   _nIterP = nIterP;
+  _max_gibbsmass_paraA = max_gibbsmass_paraA;
+  _max_gibbsmass_paraP = max_gibbsmass_paraP;
+  _lambdaA_scale_factor = lambdaA_scale_factor;
+  _lambdaP_scale_factor = lambdaP_scale_factor;
+  _simulation_id = simulation_id;
   _atomicSize = atomicSize;
   _label_A = label_A;
   _label_P = label_P;
@@ -62,13 +71,21 @@ void GibbsSampler::init_AAtomicdomain_and_PAtomicdomain(){
 
   // calcuate #Bins and lambda for the atomic spaces
   _nBinsA = _nRow*_nFactor;
-  _lambdaA = _alphaA*sqrt(_nFactor/D_mean);
+  _lambdaA = _alphaA*sqrt(_nFactor/D_mean) * _lambdaA_scale_factor;
   _nBinsP = _nFactor*_nCol;
-  _lambdaP = _alphaP*sqrt(_nFactor/D_mean);
+  _lambdaP = _alphaP*sqrt(_nFactor/D_mean) * _lambdaP_scale_factor;
+
+  // calculate the maximum gibbs mass for A and p
+  _max_gibbsmassA = _max_gibbsmass_paraA / _lambdaA;
+  _max_gibbsmassP = _max_gibbsmass_paraP / _lambdaP;
 
   // initialize the atomic spaces
   _AAtomicdomain.initializeAtomic(_nBinsA,atomicSize,_alphaA,_lambdaA,_label_A);
   _PAtomicdomain.initializeAtomic(_nBinsP,atomicSize,_alphaP,_lambdaP,_label_P);
+
+  cout << "_lambdaA = " << _lambdaA << ", _max_gibbsmassA = " << _max_gibbsmassA << endl;
+  cout << "_lambdaP = " << _lambdaP << ", _max_gibbsmassP = " << _max_gibbsmassP << endl << endl;
+
 }
 
 // clear all quantities related to the local matrix proposal
@@ -150,7 +167,7 @@ void GibbsSampler::local_display_matrix2(double ** Mat_ptr,
 
 void GibbsSampler::local_display_matrix2F(ofstream& outputFile, double ** Mat_ptr, 
 					  unsigned int n_row, unsigned int n_col){
-  outputFile << endl;
+  //outputFile << endl;
   for(unsigned int m=0;m<n_row;++m)
     {
       for (unsigned int n=0; n<n_col;++n)
@@ -160,7 +177,7 @@ void GibbsSampler::local_display_matrix2F(ofstream& outputFile, double ** Mat_pt
 	}
       outputFile << endl;
     }
-  outputFile << endl;
+  //outputFile << endl;
 
 }
 
@@ -222,16 +239,20 @@ void GibbsSampler::check_resultsF(ofstream& outputFile){
 
 // -----------------------------------------------------------------------------
 void GibbsSampler::output_atomicdomain(char atomic_label,unsigned long Samp_cycle){
+
+  char outputFilename[80]; 
   switch(atomic_label){
   case 'A':
-    {
-      char outputFilename[] = "A_atomicdomain.txt";
+    { 
+      strcpy(outputFilename,_simulation_id.c_str());
+      strcat(outputFilename,"_A_atomicdomain.txt");
       _AAtomicdomain.writeAtomicInfo(outputFilename,Samp_cycle);
       break;
     }
   case 'P':
-    {
-      char outputFilename[] = "P_atomicdomain.txt";
+    {     
+      strcpy(outputFilename,_simulation_id.c_str());
+      strcat(outputFilename,"_P_atomicdomain.txt");
       _PAtomicdomain.writeAtomicInfo(outputFilename,Samp_cycle);
       break;
     }
@@ -1451,7 +1472,7 @@ bool GibbsSampler::move_exchange(char the_matrix_label,
 	      } // end of for-block for adding changes to P
 
 	      s  += pow(AOrig[jGene][iPattern1] / S[jGene][iSample1],2) +
-		pow(AOrig[jGene][iPattern2] / S[jGene][iPattern2],2);
+		pow(AOrig[jGene][iPattern2] / S[jGene][iSample2],2);
 	      su += mock1*AOrig[jGene][iPattern1]/pow(S[jGene][iSample1],2) -
 		mock2*AOrig[jGene][iPattern2]/pow(S[jGene][iSample2],2);
 	    }
@@ -1530,7 +1551,30 @@ bool GibbsSampler::move_exchange(char the_matrix_label,
 	  break;}
       }  // end of switch-block       
       // return newMatrix;
+      /*
+      // ---- checking Gibbs in exchange
+      cout << " ---------------------------------- " << endl;
+      cout << " Check Gibbs Exchange: " << endl;
+      cout << "s = " << s << ", su = " << su << ", mean = " << mean << ", sd = " << sd << endl;
+      cout << "Exchange with matrix: " << the_matrix_label << ", gibbsMass1 = " << gibbsMass1 
+           << ", gibbsMass2 = " << gibbsMass2 
+	   << ", delLLnew = " << delLLnew << endl;
+      //if(fabs(delLLnew) > 500.0 ){
+	for (unsigned int m = 0; m < 2; ++m ){
+	  cout << "chRow[" << m << "] = " << _new_Row_changed[m] << ", chCol[" << m << "] = " 
+               << _new_Col_changed[m] << ", mass changed = " << _new_mass_changed[m] << endl; 
+	}
+	display_matrix('A');
+	display_matrix('P');
+        if (fabs(delLLnew) > 500.0 ){
+            cout << "delLLNew bigger than 500! " << endl;
+        }
+
+	//}
+	*/
+      // ----------------
       return true;
+
 
     } // end of inner if-block for final updating with Gibbs
 
@@ -1943,7 +1987,11 @@ void GibbsSampler::compute_statistics_prepare_matrices(unsigned long statindx){
 // -----------------------------------------------------------------------------
 // Here, we use the matrices prepared in compute_statistics_prepare_matrices()
 // to compute the means and variances of individual elements in A and P.
-void GibbsSampler::compute_statistics(char outputFilename[],unsigned int Nstat){
+void GibbsSampler::compute_statistics(char outputFilename[],
+                                      char outputAmean_Filename[],char outputAsd_Filename[],
+                                      char outputPmean_Filename[],char outputPsd_Filename[],
+				      char outputAPmean_Filename[],
+                                      unsigned int Nstat){
 
   // compute statistics for A
 
@@ -1996,18 +2044,51 @@ void GibbsSampler::compute_statistics(char outputFilename[],unsigned int Nstat){
   outputFile << " ************************************************* " << endl;
 
   outputFile << " Number of samples for computing statistics = " << Nstat << endl;
-  outputFile << " Amean = " << endl;
+  outputFile << " Amean = " << endl << endl;
   local_display_matrix2F(outputFile,_Amean,_nRow,_nFactor);
-  outputFile << " Asd = " << endl;
+  outputFile << endl;
+  outputFile << " Asd = " << endl << endl;
   local_display_matrix2F(outputFile,_Asd,_nRow,_nFactor);
-  outputFile << " Pmean = " << endl;
+  outputFile << endl;
+  outputFile << " Pmean = " << endl << endl;
   local_display_matrix2F(outputFile,_Pmean,_nFactor,_nCol);
-  outputFile << " Psd = " << endl;
+  outputFile << endl;
+  outputFile << " Psd = " << endl << endl;
   local_display_matrix2F(outputFile,_Psd,_nFactor,_nCol);
-  outputFile << "The product Amean*Pmean gives " << endl;
+  outputFile << endl;
+  outputFile << "The product Amean*Pmean gives " << endl << endl;
   local_display_matrix2F(outputFile,APmean,_nRow,_nCol);
+  outputFile << endl;
 
   outputFile.close();
+
+  // independent output of Amean, Asd, Pmean, Psd, APmean
+  ofstream output_Amean;
+  output_Amean.open(outputAmean_Filename,ios::out);
+  local_display_matrix2F(output_Amean,_Amean,_nRow,_nFactor);
+  output_Amean.close();
+
+  ofstream output_Asd;
+  output_Asd.open(outputAsd_Filename,ios::out);
+  local_display_matrix2F(output_Asd,_Asd,_nRow,_nFactor);
+  output_Asd.close();
+
+  ofstream output_Pmean;
+  output_Pmean.open(outputPmean_Filename,ios::out);
+  local_display_matrix2F(output_Pmean,_Pmean,_nFactor,_nCol);
+  output_Pmean.close();
+
+  ofstream output_Psd;
+  output_Psd.open(outputPsd_Filename,ios::out);
+  local_display_matrix2F(output_Psd,_Psd,_nFactor,_nCol);
+  output_Psd.close();
+
+  ofstream output_APmean;
+  output_APmean.open(outputAPmean_Filename,ios::out);
+  local_display_matrix2F(output_APmean,APmean,_nRow,_nCol);
+  output_APmean.close();
+
+
 
 }
 
@@ -2212,14 +2293,14 @@ double GibbsSampler::getMass(char the_matrix_label, double origMass,
 
   // if the likelihood is flat and nonzero, 
   // force to sample strictly from the prior
-  if ( plower == 1 || s < 1.e-10 || newMass == DOUBLE_POSINF || pupper == 0) { 
+  if ( plower == 1 || s < 1.e-5 || newMass == DOUBLE_POSINF || pupper == 0) { 
     if (origMass < 0) {    // death case
       newMass = abs(origMass);
     } else {
       newMass = 0.;  // birth case
     }
   } // end of first comparison
-  else if (plower >= 0.999) {
+  else if (plower >= 0.99) {
     double tmp1 = sub_func::dnorm(0, mean, sd, false); 
     double tmp2 = sub_func::dnorm(10*lambda, mean, sd, false);
     if ( (tmp1 > epsilon) && (fabs(tmp1-tmp2) < epsilon) )   {
@@ -2234,6 +2315,22 @@ double GibbsSampler::getMass(char the_matrix_label, double origMass,
   }  // end of if-block for the remaining case
 
 
+  // limit the mass range
+    switch(the_matrix_label) {
+    case 'A':
+      {
+	if (newMass > _max_gibbsmassA)
+	  newMass = _max_gibbsmassA;
+	break;
+      }
+    case 'P':
+      {
+	if (newMass > _max_gibbsmassP)
+	  newMass = _max_gibbsmassP;
+	break;
+      }
+    }
+
   if (newMass < 0) newMass = 0;   // due to the requirement that newMass > 0 
 
   return newMass;
@@ -2241,3 +2338,19 @@ double GibbsSampler::getMass(char the_matrix_label, double origMass,
 }
 
 
+// -----------------------------------------------------------------------------
+void GibbsSampler::detail_check(char outputchi2_Filename[]){
+
+      double chi2 = 2.*cal_logLikelihood();
+      cout << "oper_type: " << _oper_type <<
+              " ,nA: " << getTotNumAtoms('A') <<
+	      " ,nP: " << getTotNumAtoms('P') << 
+              " ,chi2 = " << chi2 << endl;
+
+
+      ofstream outputchi2_File;
+      outputchi2_File.open(outputchi2_Filename,ios::out|ios::app);
+      outputchi2_File << chi2 << endl;
+      outputchi2_File.close();
+
+}
