@@ -58,7 +58,8 @@ class GibbsSampler
 
   map<unsigned long long, double> _atomicProposal;
   unsigned int _nChange_atomicProposal;
-  char _oper_type;
+  char _oper_type; // label for the operation type
+  double _sysChi2; // the chi2 value for the system
 
   unsigned int _nChange_matrixElemChange;
   vector<unsigned int> _Row_changed;
@@ -76,6 +77,8 @@ class GibbsSampler
   vector<unsigned int> _new_Col_changed;
   vector<double> _new_mass_changed;
   vector<boost::tuple<unsigned int, unsigned int, double> > _new_matrixElemChange;
+
+
 
   // for computing statistics with matrices A and P
   // unsigned long _statindx_A, _statindx_P;  // counter
@@ -132,8 +135,7 @@ class GibbsSampler
 
   void output_computing_info(char outputFilename[],
                              unsigned long Equil_cycle, unsigned long nEquil,
-			     unsigned long Samp_cycle, unsigned long nSample, 
-                             double chi2);
+			     unsigned long Samp_cycle, unsigned long nSample);
 
   // ********* METHODS TO GO BETWEEN ATOMIC SPACE AND MATRIX *****************
 
@@ -179,6 +181,12 @@ class GibbsSampler
   void extract_new_atomicProposal(char the_matrix_label);
 
   void update(char the_matrix_label);
+
+  void init_sysChi2();
+
+  void update_sysChi2(double delsysChi2);
+
+  double get_sysChi2();
 
   void get_oper_type(char the_matrix_label);
 
@@ -229,7 +237,7 @@ class GibbsSampler
 		 unsigned int iRow,
 		 unsigned int iCol,
 		 double const * const * otherMatrix, 
-		 const vector<vector<double> > currentChainMatrix,
+		 double const * const * currentChainMatrix,
 		 double const * const * D, double const * const * S,
 		 double rng);
   // ---------------------------------------------------------------------------

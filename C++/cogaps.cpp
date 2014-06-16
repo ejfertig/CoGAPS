@@ -89,6 +89,8 @@ int main(int ac, char* av[]){
                            // scale factor for lambdaA
   double lambdaP_scale_factor = Cogaps_options.lambdaP_scale_factor;
                            // scale factor for lambdaP
+  bool Q_output_atomic = Cogaps_options.Q_output_atomic;
+                           // whether to output the atomic space info
 
   // Parameters or structures to be calculated or constructed:
   unsigned int nRow;       // number of items in observation (= # of genes)
@@ -122,7 +124,8 @@ int main(int ac, char* av[]){
   outputFile << "simulation id: " << simulation_id << endl;
   outputFile << "nFactor = " << nFactor << endl;
   outputFile << "nEquil = " << nEquil << endl;
-  outputFile << "nSample = " << nSample << endl << endl;
+  outputFile << "nSample = " << nSample << endl;
+  outputFile << "Q_output_atomic (bool) = " << Q_output_atomic << endl << endl;
 
   outputFile << "Parameters for A:" << endl;
   outputFile << "alphaA = " << alphaA << endl;
@@ -161,6 +164,7 @@ int main(int ac, char* av[]){
   GibbsSamp.init_AMatrix_and_PMatrix(); // initialize A and P matrices
   GibbsSamp.init_AAtomicdomain_and_PAtomicdomain(); // intialize atomic spaces
                                                     // A and P
+  GibbsSamp.init_sysChi2(); // initialize the system chi2 value
 
   // ===========================================================================
   // Part 2) Equilibration:
@@ -201,19 +205,19 @@ int main(int ac, char* av[]){
     for (unsigned long iterP=1; iterP <= nIterP; ++iterP){
       GibbsSamp.update('P');
       //GibbsSamp.check_atomic_matrix_consistency('P');
-      // GibbsSamp.detail_check(outputchi2_Filename);
+      //GibbsSamp.detail_check(outputchi2_Filename);
     }
     GibbsSamp.check_atomic_matrix_consistency('P');
 
     // ----------- output computing info ---------
     if ( ext_iter % (unsigned long)floor(nEquil/150) == 0){
-      chi2 = 2.*GibbsSamp.cal_logLikelihood();
-      GibbsSamp.output_computing_info(outputFilename,ext_iter,nEquil,0,nSample,chi2);
+      //chi2 = 2.*GibbsSamp.cal_logLikelihood();
+      GibbsSamp.output_computing_info(outputFilename,ext_iter,nEquil,0,nSample);
       cout << "Equil: " << ext_iter << " of " << nEquil << 
               " ,nA: " << GibbsSamp.getTotNumAtoms('A') <<
 	      " ,nP: " << GibbsSamp.getTotNumAtoms('P') << 
-              " ,chi2 = " << chi2 << endl;
-
+	// " ,chi2 = " << chi2 <<
+              " ,System Chi2 = " << GibbsSamp.get_sysChi2() << endl;
     }
 
     // -------------------------------------------
@@ -246,7 +250,6 @@ int main(int ac, char* av[]){
       //GibbsSamp.check_atomic_matrix_consistency('A');
       //GibbsSamp.detail_check(outputchi2_Filename);
     }
-    GibbsSamp.output_atomicdomain('A',i);
     GibbsSamp.check_atomic_matrix_consistency('A');
 
     for (unsigned long iterP=1; iterP <= nIterP; ++iterP){ 
@@ -254,23 +257,34 @@ int main(int ac, char* av[]){
       //GibbsSamp.check_atomic_matrix_consistency('P');
       //GibbsSamp.detail_check(outputchi2_Filename);
     }
-    GibbsSamp.output_atomicdomain('P',i);
     GibbsSamp.check_atomic_matrix_consistency('P');
+
+    if (Q_output_atomic == true){
+       GibbsSamp.output_atomicdomain('A',i);
+       GibbsSamp.output_atomicdomain('P',i);
+    }
 
      statindx += 1;
      GibbsSamp.compute_statistics_prepare_matrices(statindx);
 
     // ----------- output computing info ---------
     if ( i % (unsigned long)floor(nSample/100) == 0){
-      //statindx += 1;
-      chi2 = 2.*GibbsSamp.cal_logLikelihood();
+  
+      // chi2 = 2.*GibbsSamp.cal_logLikelihood();
       //GibbsSamp.output_atomicdomain('A',(unsigned long) statindx);
       //GibbsSamp.output_atomicdomain('P',(unsigned long) statindx);
-      GibbsSamp.output_computing_info(outputFilename,nEquil,nEquil,i,nSample,chi2);
+      GibbsSamp.output_computing_info(outputFilename,nEquil,nEquil,i,nSample);
       cout << "Samp: " << i << " of " << nSample << 
               " ,nA: " << GibbsSamp.getTotNumAtoms('A') <<
 	      " ,nP: " << GibbsSamp.getTotNumAtoms('P') << 
-              " ,chi2 = " << chi2 << endl;
+	// " ,chi2 = " << chi2 <<
+              " , System Chi2 = " << GibbsSamp.get_sysChi2() << endl;
+
+      if (i == nSample){
+         chi2 = 2.*GibbsSamp.cal_logLikelihood();
+	 cout << " *** Check value of final chi2: " << chi2 << " **** " << endl; 
+      }
+
 
     }
 

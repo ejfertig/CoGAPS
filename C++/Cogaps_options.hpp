@@ -62,6 +62,7 @@ public:
   unsigned long nIterA, nIterP;
   double max_gibbsmass_paraA, max_gibbsmass_paraP;
   double lambdaA_scale_factor, lambdaP_scale_factor;
+  bool Q_output_atomic;
  	
   //	Cogaps_options_class(int ac, char* av[]) throw(exception,genes_exception):
   Cogaps_options_class(int ac, char* av[]):
@@ -88,6 +89,8 @@ public:
        "number of iterations to equilibrium")
       ("common.nSample,S", boost::program_options::value<unsigned long>(&nSample)->default_value(unsig_long_max), 
        "maximal number of iterations")
+      ("common.Q_output_atomic", boost::program_options::value<bool>(&Q_output_atomic)->default_value(true),
+       "whether to output atomic")
 
       ("A.alphaA", boost::program_options::value<double>(&alphaA)->default_value(0.01), 
        "prior sparsity of A matrix")
@@ -203,6 +206,7 @@ ostream & operator << (ostream & o, const Cogaps_options_class & options)
     "simulation_id="<<options.simulation_id<<endl<<
     "nEquil="<<options.nEquil<<endl<<
     "nSample="<<options.nSample<<endl<<
+    "Q_output_atomic="<<options.Q_output_atomic << endl << endl <<
 
 
     "[A]"<<endl<<
