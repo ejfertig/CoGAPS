@@ -1,0 +1,22 @@
+[common]
+nFactor=7
+datafile=Data2.txt
+variancefile=Noise2.txt 
+simulation_id=trial4
+nEquil = 2000
+nSample = 2000
+Q_output_atomic = true
+
+[A]
+alphaA=0.01
+nIterA=10
+nMaxA = 100000
+max_gibbsmass_paraA = 100.0
+lambdaA_scale_factor = 1.0
+
+[P]
+alphaP=0.01
+nIterP=10
+nMaxP = 100000
+max_gibbsmass_paraP = 100.0
+lambdaP_scale_factor = 1.0
