@@ -1,0 +1,10 @@
+formatSpec = '%f';
+fileID = fopen('Data2.txt', 'r');
+sizeA = [6, Inf];
+A = fscanf(fileID, formatSpec, sizeA);
+D = A';
+fclose(fileID);
+fileID = fopen('Noise2.txt', 'r');
+A = fscanf(fileID, formatSpec, sizeA);
+S = A';
+clearvars ans fileID formatSpec sizeA A;

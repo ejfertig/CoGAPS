@@ -1,0 +1,7 @@
+mex -v -I"C:\winboostlibs\include\boost-1_55" -L"C:\winboostlibs\lib" cogapsM.cpp GibbsSampler.cpp GAPSNorm.cpp Matrix.cpp AtomicSupport.cc sub_func.cpp randgen.cpp
+
+Changes:
+=================
+GapsNorm: All DelLogLike methods 
+AtomicSupport: 69 (and .hfile and function declaration on 964 for updateAtomicBins) 820 853 975 993 1064
+GibbsSamp: 328 337

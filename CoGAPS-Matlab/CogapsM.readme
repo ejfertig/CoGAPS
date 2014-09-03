@@ -1,0 +1,42 @@
+CogapsM Readme:
+=========================
+1)Install a Matlab compatible compiler, the list of which is found here:
+http://www.mathworks.com/support/compilers/R2014a/index.html;jsessionid=939e0ca2c2e82b48714a2bb6e543
+
+My installation assumes Microsoft SDK 7.1, Matlab will not recognize UNIX compilers on windows and vice versa. 
+
+2)Once the correct compiler is installed execute the following command:
+
+mex -setup C++
+
+This will allow for the creation of matlab executable files with the matlab engine.
+CogapsM replaces main() in Cogaps with a MexFunction that is able to communicate with matlab.
+
+3)Edit the config information contained in the matlab script cogapsRun.m which will be passed to the C++ code.
+
+4)Compile the Matlab Executable with the following statement, just changing the -I and -L flags for your own boost directories.
+
+mex -v -I"C:\winboostlibs\include\boost-1_55" -L"C:\winboostlibs\lib" cogapsM.cpp GibbsSampler.cpp GAPSNorm.cpp Matrix.cpp AtomicSupport.cc sub_func.cpp randgen.cpp
+
+*The quotes may or may not be needed for UNIX compilers, I have not verified this*
+
+*I have not yet gotten this to work with a makefile of sorts, 
+	as of now this string is the only way I have gotten it to work, I will attempt an easier way in the future*
+
+5)Execute cogaps with cogapsResults = cogapsRun(DMatrix, SMatrix) after successful compilation.
+
+6)Every 100 iterations of Equilibration and Sampling will be printed, and the resulting data will be returned in a Cell array in the following order:
+
+{1}AMean
+{2}AStd
+{3}PMean
+{4}PStd
+{5}Num Atoms A Equilibration
+{6}Num Atoms A Sample
+{7}Num Atoms P Equilibration
+{8}Num Atoms P Sample
+{9}ChiSq Value at Equilibration 
+
+*I have not yet figured out how to name these like in R*
+
+
