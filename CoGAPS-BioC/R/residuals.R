@@ -8,6 +8,14 @@
 
 # Output: screen plot of residuals
 
+#'\code{residuals} calculate residuals and produce heatmap
+#'
+#'@param AMean_Mat matrix of mean values for A from GAPS
+#'@param PMean_Mat matrix of mean values for P from GAPS
+#'@param D original data matrix run through GAPS
+#'@param S original standard deviation matrix run through GAPS
+#'@export
+
 
 residuals=function(AMean_Mat, PMean_Mat, D, S)    
 {

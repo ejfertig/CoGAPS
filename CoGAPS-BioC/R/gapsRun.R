@@ -17,12 +17,38 @@
 
 # Output: list with A and P matrix estimates, chi-squared and atom
 #         numbers of sample by iteration, and chi-squared of mean
+#'\code{gapsRun} calls the C++ MCMC code and performs Bayesian
+#'matrix factorization returning the two matrices that reconstruct
+#'the data matrix
+#'
+#'@param D data matrix
+#'@param S uncertainty matrix (std devs for chi-squared of Log Likelihood)
+#'@param nFactor number of patterns (basis vectors, metagenes)
+#'@param  simulation_id name to attach to atoms files if created
+#'@param  nEquil number of iterations for burn-in
+#'@param  nSample number of iterations for sampling
+#'@param  nOutR how often to print status into R by iterations
+#'@param  output_atomic whether to write atom files (large)
+#'@param  alphaA, alphaP sparsity parameters for A and P domains
+#'@param  max_gibbmass_paraA(P) limit truncated normal to max size
+#'@param  nMaxA, nMaxP PRESENTLY UNUSED, future = limit number of atoms
+#'@param  lambdaA(P)_scale_factor lambda factor in penalized likelihood
+#'@export
 
 gapsRun <- function(D, S, nFactor = "7", simulation_id = "simulation", nEquil = "1000", nSample = "1000", nOutR = 1000, output_atomic = "FALSE", alphaA = "0.01",  nMaxA = "100000", max_gibbmass_paraA = "100.0", lambdaA_scale_factor = "1.0", alphaP = "0.01", nMaxP = "100000", max_gibbmass_paraP = "100.0", lambdaP_scale_factor = "1.0")
 {
     # pass all settings to C++ within a list
-	Config = c(nFactor, simulation_id, nEquil, nSample, nOutR, output_atomic, alphaA, nMaxA, max_gibbmass_paraA, lambdaA_scale_factor, 
-        alphaP, nMaxP, max_gibbmass_paraP, lambdaP_scale_factor);
+    #    if (is.null(P)) {
+        Config = c(nFactor, simulation_id, nEquil, nSample, nOutR,
+        output_atomic, alphaA, nMaxA, max_gibbmass_paraA, lambdaA_scale_factor,
+        alphaP, nMaxP, max_gibbmass_paraP, lambdaP_scale_factor)
+        #        P <- as.data.frame(matrix(nrow=1,c(1,1,1))) # make something to pass
+        #    } else {
+        #        Config = c(nFactor, simulation_id, nEquil, nSample, nOutR,
+        #        output_atomic, alphaA, nMaxA, max_gibbmass_paraA, lambdaA_scale_factor,
+        #        alphaP, nMaxP, max_gibbmass_paraP, lambdaP_scale_factor, 1)
+ 
+ #   }
 	
 	geneNames = rownames(D);
 	sampleNames = colnames(D);
@@ -68,7 +94,7 @@ gapsRun <- function(D, S, nFactor = "7", simulation_id = "simulation", nEquil = 
 	}
 	
 	cogapResult = c(cogapResult, calcChiSq);
-	names(cogapResult)[10] = "calcChiSq";
+	names(cogapResult)[10] = "meanChi2";
     
     print(paste("Chi-Squared of Mean:",calcChiSq))
 	

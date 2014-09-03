@@ -22,6 +22,26 @@
 # Output: list with matrices, mean chi-squared value, and gene set
 #         results
 
+#'\code{CoGAPS} calls the C++ MCMC code through gapsRun and performs Bayesian
+#'matrix factorization returning the two matrices that reconstruct
+#'the data matrix and then calls calcCoGAPSStat to estimate gene set
+#'activity with nPerm set to 500
+#'
+#'@param data data matrix
+#'@param unc uncertainty matrix (std devs for chi-squared of Log Likelihood)
+#'@param GStoGenes data.frame or list with gene sets
+#'@param nFactor number of patterns (basis vectors, metagenes)
+#'@param  simulation_id name to attach to atoms files if created
+#'@param  nEquil number of iterations for burn-in
+#'@param  nSample number of iterations for sampling
+#'@param  nOutR how often to print status into R by iterations
+#'@param  output_atomic whether to write atom files (large)
+#'@param  alphaA, alphaP sparsity parameters for A and P domains
+#'@param  max_gibbmass_paraA(P) limit truncated normal to max size
+#'@param  nMaxA, nMaxP PRESENTLY UNUSED, future = limit number of atoms
+#'@param  lambdaA(P)_scale_factor lambda factor in penalized likelihood
+#'@export
+
 CoGAPS <- function(data, unc, GStoGenes, nFactor = "7", nEquil=1000,
                 nSample=1000, nOutR=1000, output_atomic="false",
                 simulation_id="simulation", plot=TRUE,nPerm=500,
@@ -51,7 +71,7 @@ CoGAPS <- function(data, unc, GStoGenes, nFactor = "7", nEquil=1000,
   GSP <- calcCoGAPSStat(matrixDecomp$Amean, matrixDecomp$Asd, GStoGenes, nPerm)
 
   return(list(meanChi2=matrixDecomp$calcChiSq,
-              D=matrixDecomp$D, Sigma=matrixDecomp$Sigma,
+              D=data, Sigma=unc,
               Amean=matrixDecomp$Amean, Asd=matrixDecomp$Asd,
               Pmean=matrixDecomp$Pmean, Psd=matrixDecomp$Psd,
               GSUpreg=GSP$GSUpreg, GSDownreg=GSP$GSDownreg, GSActEst=GSP$GSActEst))

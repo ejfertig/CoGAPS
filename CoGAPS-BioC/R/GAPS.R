@@ -1,5 +1,8 @@
 # GAPS: retired function, originally for link to JAGS
 
+#'\code{GAPS} is retired as of version 2, use gapsRun instead
+#'@export
+
 GAPS <- function(data, unc,
                  outputDir, outputBase="",
                  sep = "\t", isPercentError=FALSE,

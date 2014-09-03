@@ -2,39 +2,30 @@
 \alias{CoGAPS-package}
 \alias{CoGAPS}
 \docType{package}
-\title{
-What the package does (short line)
+\title{CoGAPS: Coordinated Gene Analysis Pattern Sets
 }
 \description{
-More about what it does (maybe more than one line)
-~~ A concise (1-5 lines) description of the package ~~
-}
-\details{
+CoGAPS implements a Bayesian MCMC matrix factorization algorithm,
+    GAPS, and links it to gene set statistic methods to infer
+     biological process activity.  It can be used to perform
+      sparse matrix factorization on any data, and when this 
+      data represents biomolecules, to do gene set analysis.
+
 \tabular{ll}{
 Package: \tab CoGAPS\cr
 Type: \tab Package\cr
 Version: \tab 1.0\cr
 Date: \tab 2014-07-23\cr
-License: \tab What Licence is it under ?\cr
-}
-~~ An overview of how to use the package, including the most important ~~
-~~ functions ~~
-}
-\author{
-Who wrote it
+License: \tab LGPL\cr
+} }
 
-Maintainer: Who to complain to <yourfault@somewhere.net>
+\author{
+Maintainer: Elana J. Fertig <ejfertig@jhmi.edu>, Michael F. Ochs
+    <ochsm@tcnj.edu>
 }
 \references{
-~~ Literature or other references for background information ~~
-}
-~~ Optionally other standard keywords, one per line, from file KEYWORDS in ~~
-~~ the R documentation directory ~~
-\keyword{ package }
-\seealso{
-~~ Optional links to other man pages, e.g. ~~
-~~ \code{\link[<pkg>:<pkg>-package]{<pkg>}} ~~
-}
-\examples{
-%% ~~ simple examples of the most important functions ~~
+Fertig EJ1, Ding J, Favorov AV, Parmigiani G, Ochs MF.  
+CoGAPS: an R/C++ package to identify patterns and biological
+process activity in transcriptomic data. 
+Bioinformatics. 2010 Nov 1;26(21):2792-3
 }

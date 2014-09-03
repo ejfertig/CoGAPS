@@ -9,8 +9,24 @@
 # Output: environment with gene set statistics 
 #       NOTE: should make into list object, env historical
 
+#'\code{calcCoGAPSStat} calculates the gene set statistics for each
+#'column of A using a Z-score from the elements of the A matrix,
+#'the input gene set, and permutation tests
+#'
+#'@param Amean A matrix mean values
+#'@param Asd A matrix standard deviations
+#'@param GStoGenes data.frame or list with gene sets
+#'@param numPerm number of permutations for null
+#'@export
+
 calcCoGAPSStat <- function (Amean, Asd, GStoGenes, numPerm=500) {
 
+  # test for std dev of zero, possible mostly in simple simulations
+  if (sum(Asd==0) > 0) {
+      temp <- min(Asd[Asd>0])
+      Asd[Asd==0] <- temp
+  }
+  
   # calculate Z scores
   zMatrix <- calcZ(Amean,Asd)
   

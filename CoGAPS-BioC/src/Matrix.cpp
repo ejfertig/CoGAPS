@@ -1,10 +1,10 @@
 
-// CoGAPS C++ Verison
+// CoGAPS C++ Version
 // 
 // Creation of Matrix class and functions related to it
 //
 // History: v 1.0  Jan 18, 2014
-//
+//          Updated to include mapped methods August 7, 2014
 
 #include <iostream>
 #include <iomanip>
@@ -135,11 +135,57 @@ void Matrix::matrix_init() {
     }
 }
 
+// set a row of the matrix to passed vector 
+// implemented to fix rows at a time with maps
+void Matrix::setRow(vector <double> &newRow, int RowNum){
+        for (int n=0; n<_n_col;++n) {        
+	  _Matrix[RowNum][n] = newRow.at(n); 
+        }
+    }
+	
+// set a column of the matrix to passed vector
+// implemented to fix columns at a time with maps
+void Matrix::setCol(vector <double> &newCol, int ColNum){
+        for (int n=0; n<_n_row;++n) {        
+	  _Matrix[n][ColNum] = newCol.at(n); 
+        }
+    } 
+	
+// set a row of the matrix to passed vector
+// implemented to fix rows at a time with maps
+void Matrix::setRow(vector <double> const &theRow, int RowNum){
+        for (int n=0; n<_n_col;++n) {        
+	  _Matrix[RowNum][n] = theRow.at(n); 
+        }
+    }
+	
+// set a column of the matrix to passed vector 
+// implemented to fix columns at a time with maps
+void Matrix:: setCol(vector <double> const &theCol, int ColNum){
+        for (int n=0; n<_n_row;++n) {        
+	  _Matrix[n][ColNum] = theCol.at(n); 
+        }
+    } 
+
+
 
 // these methods return the matrix or parameters
 double ** Matrix::get_matrix() const {
   return _Matrix;
 }
+
+void Matrix::get_Row(int rowNum, vector <double> &theRow) const {
+  for (int iCol = 0; iCol < _n_col; iCol++){
+   theRow.push_back(_Matrix[rowNum][iCol]);
+   }
+}
+
+void Matrix::get_Col(int colNum, vector <double> &theCol) const {
+  for (int iRow=0; iRow < _n_row; iRow++){
+   theCol.push_back(_Matrix[iRow][colNum]);
+   }
+}
+
 
 unsigned int Matrix::get_nRow() const {
   return _n_row;

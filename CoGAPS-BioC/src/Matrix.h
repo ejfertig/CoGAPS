@@ -44,8 +44,20 @@ class Matrix
 	           char the_matrix_label, double the_matrix_alpha);
 
   void matrix_init();
+  
+  void setRow(vector <double> &newRow, int RowNum);
+  
+  void setCol(vector <double> &newCol, int ColNum);
+  
+  void setRow(vector <double> const &theRow, int RowNum);
+  
+  void setCol(vector <double> const &theCol, int ColNum);
 
   double ** get_matrix() const;
+  
+  void get_Row(int rowNum, vector <double> &theRow) const;
+  
+  void get_Col(int colNum, vector <double> &theCol) const;
 
   unsigned int get_nRow() const;
 

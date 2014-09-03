@@ -1,12 +1,25 @@
 Package: CoGAPS
 Type: Package
-Title: What the package does (short line)
-Version: 1.0
-Date: 2014-07-23
-Author: Who wrote it
-Maintainer: Who to complain to <yourfault@somewhere.net>
-Description: More about what it does (maybe more than one line)
-License: What Licence is it under ?
-Imports: Rcpp (>= 0.11.2)
+Title: Coordinated Gene Activity in Pattern Sets
+Version: 2.0
+Date: 2014-08-23
+Author: Elana J. Fertig, Michael F. Ochs
+Maintainer: Elana J. Fertig <ejfertig@jhmi.edu>, Michael F. Ochs
+    <ochsm@tcnj.edu>
+Description: CoGAPS implements a Bayesian MCMC matrix factorization algorithm,
+    GAPS, and links it to gene set statistic methods to infer biological
+    process activity.  It can be used to perform sparse matrix factorization on
+    any data, and when this data represents biomolecules, to do gene set
+    analysis.
+License: GPL
+Imports:
+    Rcpp (>= 0.11.2),
+    graphics,
+    grDevices,
+    methods,
+    stats,
+    utils,
+    RColorBrewer,
+    plotrix
 LinkingTo: Rcpp
 Packaged: 2014-07-23 15:49:58 UTC; Conor

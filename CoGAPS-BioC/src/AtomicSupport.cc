@@ -983,9 +983,9 @@ namespace gaps {
     // TODO - right now ensures that the minimum is of unit one, when adapting probabilities 
     // as we go should revise to ensure that the threshold is sufficient to account for the number 
     // of atoms which are already in that bin
-    vector<double> binProbVector (binProbabilities, binProbabilities+length);
-    sort(binProbVector.begin(), binProbVector.end());
-
+      vector<double> binProbVector (binProbabilities, binProbabilities+length);
+      sort(binProbVector.begin(), binProbVector.end());
+	  
     
     double minMaxValue = 0, thresholdValue = 0;
     double newTotal = totalWeight, remainingTotal = totalWeight;
@@ -1004,8 +1004,8 @@ namespace gaps {
 
       // only work last of a given probability value
       if (numRemoved < length) {
-	binProbIt2 = binProbIt + 1;
-	if (*binProbIt == *binProbIt2) {
+	  binProbIt2 = binProbIt + 1;
+	   if (*binProbIt == *binProbIt2) {
 	  continue;
 	}
       } else {

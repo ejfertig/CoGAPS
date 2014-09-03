@@ -1,2 +1,2 @@
-boost_include=/Users/mfochs/boost/boost_1_54_0
-boost_lib=/Users/mfochs/boost/boost_1_55_0/stage/lib
+boost_include=/usr/local/boost/boost_1_56_0
+boost_lib=/usr/local/boost/boost_1_56_0/stage/lib

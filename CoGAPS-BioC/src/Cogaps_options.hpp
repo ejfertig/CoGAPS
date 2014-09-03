@@ -63,6 +63,10 @@ public:
   double max_gibbsmass_paraA, max_gibbsmass_paraP;
   double lambdaA_scale_factor, lambdaP_scale_factor;
   bool Q_output_atomic;
+  // For cogapsMAP:
+  bool runCogapsMap;
+  char fixedmatrix;
+  string fixedpatternsfile;
  	
   //	Cogaps_options_class(int ac, char* av[]) throw(exception,genes_exception):
   Cogaps_options_class(int ac, char* av[]):
@@ -91,7 +95,13 @@ public:
        "maximal number of iterations")
       ("common.Q_output_atomic", boost::program_options::value<bool>(&Q_output_atomic)->default_value(true),
        "whether to output atomic")
-
+	   ("common.runCogapsMap",boost::program_options::value<bool>(&runCogapsMap)->default_value(false),
+	   "whether to run with fixed mappings")
+	   ("common.fixedmatrix",boost::program_options::value<char>(&fixedmatrix)->default_value('P'),
+	   "the matrix to fix")
+      ("common.fixedpatternsfile", boost::program_options::value<string>(&fixedpatternsfile)->default_value("fixedpat.txt"), 
+       "name of the fixed patterns file")
+	   
       ("A.alphaA", boost::program_options::value<double>(&alphaA)->default_value(0.01), 
        "prior sparsity of A matrix")
       ("A.nMaxA", boost::program_options::value<double>(&nMaxA)->default_value(unsig_long_max),
@@ -206,7 +216,10 @@ ostream & operator << (ostream & o, const Cogaps_options_class & options)
     "simulation_id="<<options.simulation_id<<endl<<
     "nEquil="<<options.nEquil<<endl<<
     "nSample="<<options.nSample<<endl<<
-    "Q_output_atomic="<<options.Q_output_atomic << endl << endl <<
+    "Q_output_atomic="<<options.Q_output_atomic << endl<<
+	"runCogapsMap="<<options.runCogapsMap << endl <<
+	"fixedmatrix="<<options.fixedmatrix << endl << 
+	"fixedpatternsfile="<<options.fixedpatternsfile << endl <<
 
 
     "[A]"<<endl<<

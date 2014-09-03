@@ -120,6 +120,8 @@ void GibbsSampler::init_AAtomicdomain_and_PAtomicdomain(){
   _AAtomicdomain.initializeAtomic(_nBinsA,atomicSize,_alphaA,_lambdaA,_label_A);
   _PAtomicdomain.initializeAtomic(_nBinsP,atomicSize,_alphaP,_lambdaP,_label_P);
 
+  //cout << "_lambdaA = " << _lambdaA << ", _max_gibbsmassA = " << _max_gibbsmassA << endl;
+  //cout << "_lambdaP = " << _lambdaP << ", _max_gibbsmassP = " << _max_gibbsmassP << endl << endl;
 
 }
 
@@ -1023,7 +1025,7 @@ bool GibbsSampler::birth(char the_matrix_label,
 						  double const * const * D,
 						  double const * const * S,
 						  double ** AOrig,
-						  double ** POrig)// in progress
+						  double ** POrig)
 {
 
   double rng = 0.1; 
@@ -1138,6 +1140,10 @@ bool GibbsSampler::move(char the_matrix_label,
   chmass1 = atom->second;
   atom++;
   chmass2 = atom->second;
+  if (_atomicProposal.size()==1){
+  cout << "Not doing a move due to update inconsistency."<< endl;
+  return false;
+  }
 
   // extract location, bin #, mass and changed mass corresponding to the 
   // atomic proposal such that "1" refers to a positive mass change and 
@@ -1267,7 +1273,6 @@ bool GibbsSampler::move(char the_matrix_label,
 
   double rng = log(randgen('U',0,0));
  
-  if (_oper_type == 'M'){
     if (tmp < rng) {
       switch(the_matrix_label){
       case 'A':
@@ -1301,7 +1306,6 @@ bool GibbsSampler::move(char the_matrix_label,
 	  }
      } // end of switch-block       
     }  
-  } // end of the M-H determination block for move
  
 
   // end of M-H sampling

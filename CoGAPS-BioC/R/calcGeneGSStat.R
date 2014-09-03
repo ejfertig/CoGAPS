@@ -1,3 +1,27 @@
+# calcGeneGSStat: calculate probability gene belongs in gene set
+# History: v1.0 EJF original CoGAPS
+
+# Inputs: Amean - A matrix mean values
+#         Asd - A matrix standard deviations
+#         GStoGenes - data.frame or list with gene sets
+#         numPerm - number of permutations for null
+#         Pw - weighting on genes
+#         nullGenes - adjust genes
+
+# Output: environment with gene set statistics
+#       NOTE: should make into list object, env historical
+
+#'\code{calcGeneGSStat} calculates the probability that a gene
+#'listed in a gene set behaves like other genes in the set within
+#'the given data set
+#'
+#'@param Amean A matrix mean values
+#'@param Asd A matrix standard deviations
+#'@param GStoGenes data.frame or list with gene sets
+#'@param numPerm number of permutations for null
+#'@param Pw weight on genes
+#'@param nullGenes - logical indicating gene adjustment
+#'@export
 
 calcGeneGSStat  <- function(Amean, Asd, GSGenes, numPerm, Pw=rep(1,ncol(Amean)), nullGenes=F) {
 	gsStat <- calcCoGAPSStat(Amean, Asd, data.frame(GSGenes), 

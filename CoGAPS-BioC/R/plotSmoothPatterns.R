@@ -1,3 +1,31 @@
+
+
+# plotSmoothPatterns: function to plot pattern matrix
+# History: v1.0 EJF original CoGAPS
+
+# Inputs: P - P matrix
+#         x - optional variables
+#         breaks, breakStyle - plotting methods
+#         orderP - whether to order patterns
+#         plotPTS - whether to plot points on lines
+#         pointCol - color of points
+#         lineCol - color of line
+
+# Output: plot of P matrix rows as lines
+
+#'\code{plotSmoothPatterns} plots the output A and P matrices as a
+#' heatmap and line plot respectively
+#'
+#'@param P the mean A matrix
+#'@param x optional variables
+#'@param breaks breaks in plots
+#'@param breakStyle style of breaks
+#'@param orderP whether to order patterns
+#'@param plotPTS whether to plot points on lines
+#'@param pointCol color of points
+#'@param lineCol color of line
+#'@export
+
 plotSmoothPatterns <- function(P, x=NULL, breaks=NULL, breakStyle=T, orderP=!all(is.null(x)), plotPTS=F, pointCol='black',
 							   lineCol='grey', add=F, ...) 
 {
@@ -6,7 +34,7 @@ plotSmoothPatterns <- function(P, x=NULL, breaks=NULL, breakStyle=T, orderP=!all
 	if (all(is.null(x))) {
 		x <- 1:ncol(P)
 	}
-	
+    
 	# specify the break points for the plot
 	if (all(is.null(breaks))) {
 		breaks <- c(0,(ncol(P)+1))
@@ -114,7 +142,6 @@ plotSmoothPatterns <- function(P, x=NULL, breaks=NULL, breakStyle=T, orderP=!all
 			scr <- scr + 1
 					 
 		}
-	}	
-	
+	}
 	close.screen(all.screens=T)
 }

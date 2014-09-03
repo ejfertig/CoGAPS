@@ -5,6 +5,24 @@
 
 using namespace Rcpp;
 
+// cogapsmap
+Rcpp::List cogapsmap(Rcpp::DataFrame DFrame, Rcpp::DataFrame SFrame, Rcpp::DataFrame FixedPatt, Rcpp::CharacterVector Config);
+RcppExport SEXP CoGAPS_cogapsmap(SEXP DFrameSEXP, SEXP SFrameSEXP, SEXP FixedPattSEXP, SEXP ConfigSEXP) {
+BEGIN_RCPP
+    SEXP __sexp_result;
+    {
+        Rcpp::RNGScope __rngScope;
+        Rcpp::traits::input_parameter< Rcpp::DataFrame >::type DFrame(DFrameSEXP );
+        Rcpp::traits::input_parameter< Rcpp::DataFrame >::type SFrame(SFrameSEXP );
+        Rcpp::traits::input_parameter< Rcpp::DataFrame >::type FixedPatt(FixedPattSEXP );
+        Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type Config(ConfigSEXP );
+        Rcpp::List __result = cogapsmap(DFrame, SFrame, FixedPatt, Config);
+        PROTECT(__sexp_result = Rcpp::wrap(__result));
+    }
+    UNPROTECT(1);
+    return __sexp_result;
+END_RCPP
+}
 // cogaps
 Rcpp::List cogaps(Rcpp::DataFrame DFrame, Rcpp::DataFrame SFrame, Rcpp::CharacterVector Config);
 RcppExport SEXP CoGAPS_cogaps(SEXP DFrameSEXP, SEXP SFrameSEXP, SEXP ConfigSEXP) {
