@@ -19,10 +19,12 @@ namespace gaps {
     AtomicSupport();
     ~AtomicSupport();
     
+    /**
+	 * @short Initialize atoms into the atomic domain -- 
+	    adding ONE atom to the location [loc] with mass (mass)
+	 */
     void initializeAtomic(unsigned int nBin, unsigned long long NatomLength, 
 			  double alpha, double lambda, char atomic_domain_label);
-
-    double computeMHAtomic();
 
     /**
      * @short Find the bin to which the given location refers.
@@ -53,10 +55,18 @@ namespace gaps {
 
     /**
      * @short Propose a change to the atomic domain
-     */
-
-
+	   The first method to be called in the Gibbs Sampler. 
+       Decide which propose method to call based on value of 
+	   double updatestep, which is based on # of atoms and 
+	   distribution on number of atoms. Propose methods are
+	   below makeProposal. 
+    */
     void makeProposal(double rng);
+	
+	void ProposeBirth();
+	void ProposeDeath();
+	void ProposeMove();
+	void ProposeExchange();
 
 
     map<unsigned long long, double> getProposedAtoms() {
@@ -107,14 +117,7 @@ namespace gaps {
     void printAtomicInfo(); // original
     void printAtomicInfoF(ofstream& outputFile);
 
-    // void writeAtomicInfo(std::ofstream& outputFile); // original
     void writeAtomicInfo(char outputFilename[],unsigned long Samp_cycle);
-
-    void doNormAtomic() {
-      _normAtomic = true;
-    }
-    
-    void setUpdateProb(bool move, bool exchange, bool birthdeath);
 
     char get_atomic_domain_label();
 
@@ -126,9 +129,6 @@ namespace gaps {
     map<unsigned long long, double> _AtomicDomain;
     unsigned long long _nAtom;
     int _iter;
-
-    bool _normAtomic;
-    bool _move, _exchange, _birthdeath;
 
     // boundaries of the atomic domain
     map<unsigned int, unsigned long long> _lBoundariesByBin;

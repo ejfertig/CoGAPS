@@ -67,7 +67,6 @@ double sub_func::pnorm(double p, double mean, double sd, double INF_Ref,double u
   return pnorm_val;
 }
 
-  //double sub_func::runif(double a, double b, double rng)
 double sub_func::runif(double a, double b)
 {
   if (b<a) 

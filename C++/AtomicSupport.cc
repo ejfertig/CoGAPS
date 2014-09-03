@@ -29,10 +29,6 @@ double lepsilon = 1.e-10;
 namespace gaps {
 
   AtomicSupport::AtomicSupport() {
-    _normAtomic = false;
-    _move = true;
-    _exchange = true;
-    _birthdeath = true;
   }
 
   AtomicSupport::~AtomicSupport() {
@@ -118,19 +114,6 @@ namespace gaps {
     outputFile << endl;
   }
 
-  /* ORIGINAL
-     void AtomicSupport::writeAtomicInfo(std::ofstream& outputFile) {
-     outputFile << getNAtom() << endl;
-   
-     map<unsigned long long, double>::const_iterator iter;
-
-     for (iter = _AtomicDomain.begin(); iter != _AtomicDomain.end(); 
-     iter++) {
-     outputFile << iter->first << "\t" << iter->second << endl;
-     }
-     }
-  */
-
   void AtomicSupport::writeAtomicInfo(char outputFilename[],unsigned long Samp_cycle) {
 
     ofstream outputFile;
@@ -140,20 +123,16 @@ namespace gaps {
       outputFile.open(outputFilename,ios::out|ios::app);
     }
     
-    //outputFile << "Sampling cycle: " <<Samp_cycle << endl;
-    //outputFile << "atomic locations" << "    " << "mass" << endl;
     map<unsigned long long, double>::const_iterator iter;
     for (iter = _AtomicDomain.begin(); iter != _AtomicDomain.end(); 
 	 iter++) {
       outputFile << setiosflags(ios::right) << setw(25) << iter->first << " " 
                  << setw(15) << iter->second << endl;
     }
-    //outputFile << endl;
+	
     outputFile.close();
   }
 
-
-  // Initialize atoms into the atmoic domain -- adding ONE atom to the location [loc] with mass (mass)
   void AtomicSupport::setInitialAtoms(const map<unsigned long long, double> 
 				      initAtoms) {
     for (map<unsigned long long, double>::const_iterator iter = initAtoms.begin(); 
@@ -359,113 +338,39 @@ namespace gaps {
 
   }
 
-  void AtomicSupport::setUpdateProb(bool move, bool exchange, bool birthdeath) {
-    
-    cout << "Setting atomic domain to the following update steps: "<<endl;
-    cout << "move? "<<move<<" exchange? "<<exchange<<" birth/death? "<<birthdeath<<endl;
-
-    _move = move;
-    _exchange = exchange;
-    _birthdeath = birthdeath;
-
-    if (!_move && !_exchange && !_birthdeath) {
-      throw logic_error("At least one update process must be allowed");
-    }
-  }
-
-
-  void AtomicSupport::makeProposal(double rng){
-
-    map<unsigned long long, double>::const_iterator iter;
+   void AtomicSupport::makeProposal(double rng){
 
     // initialize the update
     cleanClearProposal();
 
-    unsigned long long proposedLocation = _NatomLength;
-    double proposedMass = 0.;
-
-    //double updateStep = lrunif(0., 1., rng);
-    //double updateStep = lrunif(0., 0.75, rng);
-
     double minStep = 0.;
     double maxStep = 1.;
-    if (!_exchange) {
-      maxStep = 0.75;
-    }
-    if (!_birthdeath) {
-      minStep = 0.5;
-    }
+
     if (_nAtom < 2) {
       maxStep = 0.75;
     }
 
     double updateStep = sub_func::runif(minStep, maxStep);
 
-    if (!_move && (updateStep < 0.75) && (updateStep>=0.5)) {
-      double f = (0.5 - minStep) / ((0.5-minStep) + (maxStep-0.75));
-      if (updateStep < 0.5 + 0.25*f) {
-	updateStep = 2.*(updateStep - 0.5);
-      } else {
-	updateStep = updateStep + 0.25;
-      }
-    }
-
     // can only birth if there are zero atoms
     if (_nAtom == 0) {
-      if (!_birthdeath) {
-	throw logic_error("AtomicSupport::Must allow birth death if second atomic is not initialized");
-      }
       updateStep = 0.4;
     }
 
     // cannot birth an atom if there are the maximum number
     if (_nAtom >= _NatomLength) {
       if (updateStep < 0.5 && updateStep >= 0.25) {
-	if (!_birthdeath) {
-	  throw logic_error("AtomicSupport::Selected death when not allowed");
-	}
-	if (!_exchange) {
-	  if (!_move) {
-	    updateStep = 0.;
-	  } else {
-	    if (updateStep < 0.375) {
-	      updateStep = 0.;
-	    } else {
-	      updateStep = 0.6;
-	    }
-	  }
-	} else {
-	  if (!_move) {
-	    if (updateStep < 0.375) {
-	      updateStep = 0.;
-	    } else {
-	      updateStep = 0.9;
-	    }
-	  } else {
 	    if (updateStep < 1/3) {
 	      updateStep = 0.;
 	    } else {
 	      updateStep = 2*(updateStep-0.25) + 0.5;
 	    }
-	  }
-	}
-	//	double newUpdateStep = runif(0., 3., rng);
-	//if (newUpdateStep < 1) {
-	// updateStep = 0.;
-	//} else if (newUpdateStep < 2) {
-	// updateStep = 0.6;
-	//} else {
-	//updateStep = 0.9;
-	//}
       }
     }
     
     // select birth / death based on number of atoms
     double pDelete = 1.;
     if (updateStep < 0.5) {
-      if (!_birthdeath) {
-	throw logic_error("AtomicSupport: no birth death allowed, but birth death update");
-      }
       
       // following the notation of Skilling, 
       // _alpha > 0 has a poisson prior
@@ -518,16 +423,26 @@ namespace gaps {
  	updateStep = 0.4;
       }
     }
-
+	
+	//Determine operation based on updateStep
     if (updateStep < 0.25) {
+	  ProposeDeath();
+    } else if (updateStep < 0.5) {
+	  ProposeBirth();
+	} else if (updateStep < 0.75) {
+	  ProposeMove();
+    } else {
+	  ProposeExchange();
+	}
 
-      if (!_birthdeath) {
-	throw logic_error("AtomicSupport: no birth death allowed, but birth death update");
-      }
-
-      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-      // %%%%%%%%%%%%% DEATH %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+  }
+  
+  void AtomicSupport::ProposeDeath(){
+  
+     map<unsigned long long, double>::const_iterator iter;
+	 unsigned long long proposedLocation = _NatomLength;
+     double proposedMass = 0.;
+	 
       // DEATH STEP
       _oper_type = 'D';
 
@@ -537,11 +452,11 @@ namespace gaps {
       unsigned int deletionAtom = floor(sub_func::runif(0., 1.)*_nAtom);
       // find the proposed atom
       iter = _AtomicDomain.begin();
-      if (deletionAtom > 0) {
-	for (unsigned int iAtom = 0; iAtom < deletionAtom; iAtom++) {
-	  iter++;
-	  if (iter == _AtomicDomain.end())
-	    throw logic_error("Attempting to delete a non-existant atom in AtomicSupport::makeProposal.");
+    if (deletionAtom > 0) {
+	 for (unsigned int iAtom = 0; iAtom < deletionAtom; iAtom++) {
+	   iter++;
+	   if (iter == _AtomicDomain.end())
+	     throw logic_error("Attempting to delete a non-existant atom in AtomicSupport::makeProposal.");
 	}
       }
 
@@ -549,68 +464,59 @@ namespace gaps {
       proposedLocation = iter->first;
 
       // determine new mass based on deletion or resizing
-      proposedMass     = -iter->second;
+      proposedMass = -iter->second;
 
       // mark the change in the list of atomic changes
       _proposedAtoms.insert(pair<unsigned long long, double>
 			    (proposedLocation, proposedMass));
-
-    } else if (updateStep < 0.5) {
-
-      if (!_birthdeath) {
-	throw logic_error("AtomicSupport: no birth death allowed, but birth death update");
-      }
-
-      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-      // %%%%%%%%%%%%% BIRTH %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-      // add an atom
+				
+	} 
+	
+  void AtomicSupport::ProposeBirth(){
+  
+  	 map<unsigned long long, double>::const_iterator iter;
+	 unsigned long long proposedLocation = _NatomLength;
+     double proposedMass = 0.;
 
       // BIRTH STEP
       _oper_type = 'B';
+	  
+	  // add an atom
 
-      // TODO: loop is inefficient for large number of atoms, rewrite
+      // TODO: loop is inefficient for large number of atoms, REWRITE THIS LOOP
       // find a location not on the list of atoms
       do {
 	// note select location between 0 and N-1, for a total of N locations
 	proposedLocation = floor(sub_func::runif(0., 1.)*(_NatomLength-1));
 	iter = _AtomicDomain.find(proposedLocation);
       } while (iter != _AtomicDomain.end());
-
-      // generate a random mass
-      if (!_normAtomic) {
-	proposedMass = randgen('E',_lambda,0); 
-      } else {
-	// generate a bound mass when normalized
-	double plower = 0;
-	double pupper = sub_func::pexp(1.,_lambda,true,true); 
-	proposedMass = sub_func::qexp(sub_func::runif(plower,pupper),_lambda,true,true); 
-      }
-
-      // -----------------------------------------------------------------------------
+	  
+	  //generate a random mass - got rid of normAtomic statement here
+	  proposedMass = randgen('E', _lambda, 0);
+     
       // mark the change in the list of atomic changes
       _proposedAtoms.insert(pair<unsigned long long, double>
 			    (proposedLocation, proposedMass));
 
-    } else if (updateStep < 0.75) {
-
-      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-      // %%%%%%%%%%%%% MOVE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    }
+  
+  void AtomicSupport::ProposeMove(){
+    
+	 map<unsigned long long, double>::const_iterator iter;
+	 unsigned long long proposedLocation = _NatomLength;
+     double proposedMass = 0.;
 
       // MOVE STEP
       _oper_type = 'M';
 
       // move an atom
-      if (!_move) {
-	throw logic_error("AtomicSupport: no move allowed, but move update");
-      }
       
       // select the atom to move
       unsigned int moveAtom = floor(sub_func::runif(0., 1.)*_nAtom);
 
       unsigned long long lbound, rbound;
       if (moveAtom == 0) {
-	lbound = 0;
+	    lbound = 0;
       }
 
       // find the proposed atom
@@ -619,7 +525,7 @@ namespace gaps {
 	for (unsigned int iAtom = 0; iAtom < moveAtom; iAtom++) {
 	  lbound = iter->first;
 	  if (iter == _AtomicDomain.end())
-	    throw logic_error("Attempting to move a non-existant atom in AtomicSupport::makeProposal.");
+	    throw logic_error("Attempting to move a non-existent atom in AtomicSupport::makeProposal.");
 	  iter++;
 	}
       }
@@ -634,9 +540,10 @@ namespace gaps {
       }
  
       double newLocation = sub_func::runif((double) lbound, (double) rbound);
+	  int isitboundary=0;
 
-      // allow the domain to wrap around
-      if (moveAtom == 0) {
+      // allow the domain to wrap around 
+    /* if (moveAtom == 0) {
 	
 	unsigned long long otherLBound;
 	for (iter = _AtomicDomain.begin(); iter != _AtomicDomain.end(); 
@@ -657,29 +564,27 @@ namespace gaps {
 	  (double) (otherRBound + (rbound - lbound));
 	if (probLBin < sub_func::runif(0., 1.)) {
 	  newLocation = sub_func::runif(0., (double) otherRBound);
-	}
-      }
-
+	  	}
+      } */
+	  
       // add to proposal
       _proposedAtoms.insert(pair<unsigned long long, double>
 			    (moveLocation, -moveMass));
       _proposedAtoms.insert(pair<unsigned long long, double>
 			    (newLocation, moveMass));
-
-    } else {
-
-      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-      // %%%%%%%%%%%%% EXCHANGE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	}
+	
+  void AtomicSupport::ProposeExchange(){
+  
+  	 map<unsigned long long, double>::const_iterator iter;
+	 unsigned long long proposedLocation = _NatomLength;
+     double proposedMass = 0.;
 
       // EXCHANGE STEP
       _oper_type = 'E';
 
-      // exhange atoms (wlog, can always select left most atoms to exchange with 
+      // exchange atoms (wlog, can always select left most atoms to exchange with 
       // right neighbor, where last atom maps to first)
-
-      if (!_exchange) {
-	throw logic_error("AtomicSupport: no exchange allowed, but exchange update");
-      }
 
       unsigned int exchangeAtom = floor(sub_func::runif(0., 1.)*(_nAtom));
 
@@ -740,13 +645,6 @@ namespace gaps {
       
     }
 
-  }
-
-  double AtomicSupport::computeMHAtomic() {
-    // by construction -- see papers by Skilling
-    return 1.;
-  }
-
   void AtomicSupport::acceptProposal(bool updateIterCount) {
 
     // define local variables
@@ -761,61 +659,6 @@ namespace gaps {
     if (_proposedAtoms.size() > 2 && _iter > 0) {
       throw logic_error("Cannot update more than 2 atoms simultaneously.");
     }
-
-    if (_normAtomic && _proposedAtoms.size() == 1) {
-
-      proposedLocation = _proposedAtoms.begin()->first;
-      proposedMass     = _proposedAtoms.begin()->second;
-
-      if (fabs(proposedMass) > _epsilon) {
-
-	bool deleteAtom = false;
-
-	proposeIter = _AtomicDomain.find(proposedLocation);
-        double origValue = 0; 
-	bool addingAtom = proposeIter == _AtomicDomain.end();
-        if (!addingAtom) {
-	  origValue = proposeIter->second;
-        }
-
-	for (updateIter = _AtomicDomain.begin(); 
-	     updateIter != _AtomicDomain.end(); updateIter++) {
-	
-	  if (updateIter -> first == proposedLocation) {
-	    // update the given atom with the proposed change
-	    updateIter -> second += proposedMass;
-
-	    // delete the atom if it removes all its mass
-	    if (fabs(updateIter -> second) < _epsilon) {
-	      deleteAtom = true;
-	    }
-
-	  } else {
-	    // change the mass of the other atoms to reflect all the new value
-	    if (addingAtom) {
-	      updateIter -> second *= (1 - proposedMass);
-	    } else {
-	      updateIter -> second *= 1. - 
-		(proposedMass/(1. - origValue));
-	    }
-	  }
-
-	}
-
-	// delete the atom if it has zero remaining mass
-	if (deleteAtom) {
-	  _nAtom--;
-	  cleanDeleteAtomicLocation(proposedLocation);
-	}
-	
-	// added the atom
-	if (addingAtom) {
-	  _nAtom++;
-	  _AtomicDomain.insert(pair<unsigned long long, double>
-			       (proposedLocation, proposedMass));
-	}
-      }
-    } else {
       
       // loop over each new atom that was proposed
       for (map<unsigned long long, double>::iterator 
@@ -872,7 +715,6 @@ namespace gaps {
 
 	} // endif deleting atoms
       } // enddo iterator loop
-    }
     
     // erase atoms as all changes have been made
     cleanClearProposal();
@@ -978,8 +820,6 @@ namespace gaps {
       massPerBin[iBin] = 0.;
     }
 
-    //atomicDiagFile << "Iteration\t" << _iter << "\tNumber of Atoms\t" << _nAtom << endl;
-
     // output the location of atoms
     for (iter = _AtomicDomain.begin(); iter != _AtomicDomain.end(); iter++) {
       //atomicDiagFile << "\t" << iter->first;
@@ -989,16 +829,6 @@ namespace gaps {
     }
     atomicDiagFile << endl;
     
-    /*for (iter = _AtomicDomain.begin(); iter != _AtomicDomain.end(); iter++) {
-      atomicDiagFile << "\t" << iter->second;
-      }
-      atomicDiagFile << endl;*/
-
-    /*for (iBin = 0; iBin < _nBin; iBin++) {
-      atomicDiagFile << "\t" << nAtomPerBin[iBin];
-      }
-      atomicDiagFile << endl;*/
-
     for (iBin = 0; iBin < _nBin; iBin++) {
       atomicDiagFile << "\t" << massPerBin[iBin];
     }
@@ -1007,7 +837,6 @@ namespace gaps {
   }
 
   void AtomicSupport::initializeAtomicBinary(char diagnosticFileName[]) {
-    //atomicDiagFileBinary.open(diagnosticFileName, ios::binary|ios::out);
     atomicDiagFileBinary.open(diagnosticFileName, ios::out);
   }
 
@@ -1043,9 +872,6 @@ namespace gaps {
 	  atomicDiagFileBinary << "\t";
 	}
 	atomicDiagFileBinary << outputValue;
-
-	//atomicDiagFileBinary.write((char *)(&outputValue),
-	//			   sizeof(float));
       }
 
 
@@ -1063,10 +889,6 @@ namespace gaps {
 	    atomicDiagFileBinary << "\t";
           }
 	  atomicDiagFileBinary << outputValue;
-
-	  //atomicDiagFileBinary.write((char *)(&outputValue),
-	  //			      sizeof(float));
-
 	}
       }
 
@@ -1085,8 +907,6 @@ namespace gaps {
           }
 	  atomicDiagFileBinary << outputValue;
 
-	  //atomicDiagFileBinary.write((char *)(&outputValue), 
-	  //			     sizeof(outputValue));
 	}
       }
 
@@ -1147,7 +967,7 @@ namespace gaps {
     if (length != _nBin) {
       throw logic_error("Must specify same number of bin probabilities as bins to update atomic bins in AtomicSupport::updateAtomicBins.");
     }
-
+	
     unsigned long long origBoundaries[_nBin], newBoundaries[_nBin];
     
     double totalWeight = 0.;
@@ -1162,9 +982,10 @@ namespace gaps {
     // compute threshold probability input to ensure there will be mass in each bin
     // TODO - right now ensures that the minimum is of unit one, when adapting probabilities 
     // as we go should revise to ensure that the threshold is sufficient to account for the number 
-    //of atoms which are already in that bin
-    vector<double> binProbVector (binProbabilities, binProbabilities+length);
-    sort(binProbVector.begin(), binProbVector.end());
+    // of atoms which are already in that bin
+      vector<double> binProbVector (binProbabilities, binProbabilities+length);
+      sort(binProbVector.begin(), binProbVector.end());
+	  
     
     double minMaxValue = 0, thresholdValue = 0;
     double newTotal = totalWeight, remainingTotal = totalWeight;
@@ -1183,8 +1004,8 @@ namespace gaps {
 
       // only work last of a given probability value
       if (numRemoved < length) {
-	binProbIt2 = binProbIt + 1;
-	if (*binProbIt == *binProbIt2) {
+	  binProbIt2 = binProbIt + 1;
+	   if (*binProbIt == *binProbIt2) {
 	  continue;
 	}
       } else {
@@ -1277,14 +1098,11 @@ namespace gaps {
 
     }
 
-
     if (!onlyUpdateRelativeWidth) {
       // TODO - consider changing other parameters to reflect true probabilities
     }
 
   }
-
-
 
   // --------- to extract _atomic_domain_label
   char AtomicSupport::get_atomic_domain_label(){

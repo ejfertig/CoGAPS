@@ -53,8 +53,43 @@ GibbsSampler:: GibbsSampler(unsigned long nEquil, unsigned long nSample, unsigne
  
 }
 
+GibbsSampler:: GibbsSampler(unsigned long nEquil, unsigned long nSample, unsigned int nFactor, 
+			    double alphaA, double alphaP, double nMaxA, double nMaxP,
+			    unsigned long nIterA, unsigned long nIterP, 
+                            double max_gibbsmass_paraA, double max_gibbsmass_paraP,
+                            double lambdaA_scale_factor, double lambdaP_scale_factor,
+                            unsigned long atomicSize,
+			    char label_A,char label_P,char label_D,char label_S,
+			    vector<vector<double> > &DVector, vector<vector<double> > &SVector,
+                            const string & simulation_id)
+	//MUST BE CHANGED TO SIMPLY BE INPUT MATRICES
+  :_DMatrix(DVector, label_D),
+   _SMatrix(SVector, label_S){
+  _nEquil = nEquil;
+  _nSample = nSample;
+  _nFactor = nFactor;
+  _alphaA = alphaA;
+  _alphaP = alphaP;
+  _nMaxA = nMaxA;
+  _nMaxP = nMaxP;
+  _nIterA = nIterA;
+  _nIterP = nIterP;
+  _max_gibbsmass_paraA = max_gibbsmass_paraA;
+  _max_gibbsmass_paraP = max_gibbsmass_paraP;
+  _lambdaA_scale_factor = lambdaA_scale_factor;
+  _lambdaP_scale_factor = lambdaP_scale_factor;
+  _simulation_id = simulation_id;
+  _atomicSize = atomicSize;
+  _label_A = label_A;
+  _label_P = label_P;
+  _iter = 1;  // tmp use
+  _annealingTemperature = 0.4; // tmp use
+  _sysChi2 = 0.0; // tmp use
 
-// *************** METHOS FOR INITIALIZATION, DISPALY, OUTPUT ***********************
+}
+
+
+// *************** METHODS FOR INITIALIZATION, DISPLAY, OUTPUT ***********************
 void GibbsSampler::init_AMatrix_and_PMatrix(){
   // extract information from D as parameters
   _nRow = _DMatrix.get_nRow();
@@ -85,8 +120,8 @@ void GibbsSampler::init_AAtomicdomain_and_PAtomicdomain(){
   _AAtomicdomain.initializeAtomic(_nBinsA,atomicSize,_alphaA,_lambdaA,_label_A);
   _PAtomicdomain.initializeAtomic(_nBinsP,atomicSize,_alphaP,_lambdaP,_label_P);
 
-  cout << "_lambdaA = " << _lambdaA << ", _max_gibbsmassA = " << _max_gibbsmassA << endl;
-  cout << "_lambdaP = " << _lambdaP << ", _max_gibbsmassP = " << _max_gibbsmassP << endl << endl;
+  //cout << "_lambdaA = " << _lambdaA << ", _max_gibbsmassA = " << _max_gibbsmassA << endl;
+  //cout << "_lambdaP = " << _lambdaP << ", _max_gibbsmassP = " << _max_gibbsmassP << endl << endl;
 
 }
 
@@ -169,7 +204,6 @@ void GibbsSampler::local_display_matrix2(double ** Mat_ptr,
 
 void GibbsSampler::local_display_matrix2F(ofstream& outputFile, double ** Mat_ptr, 
 					  unsigned int n_row, unsigned int n_col){
-  //outputFile << endl;
   for(unsigned int m=0;m<n_row;++m)
     {
       for (unsigned int n=0; n<n_col;++n)
@@ -179,10 +213,8 @@ void GibbsSampler::local_display_matrix2F(ofstream& outputFile, double ** Mat_pt
 	}
       outputFile << endl;
     }
-  //outputFile << endl;
 
 }
-
 
 
 // -----------------------------------------------------------------------------
@@ -278,8 +310,6 @@ void GibbsSampler::output_computing_info(char outputFilename[],
   outputFile << "Total number of sampling cycles to perform = " <<  nSample << endl;
   outputFile << "System Chi2-value = " << _sysChi2 << endl;
 
-  //_AAtomicdomain.printAtomicInfoF(outputFile);
-  //_PAtomicdomain.printAtomicInfoF(outputFile);
   _AMatrix.display_matrixF(outputFile);
   _PMatrix.display_matrixF(outputFile);
   check_resultsF(outputFile);
@@ -287,7 +317,6 @@ void GibbsSampler::output_computing_info(char outputFilename[],
   outputFile.close();
 
 }
-
 
 
 // ********* METHODS TO GO BETWEEN ATOMIC SPACE AND MATRIX  ********************
@@ -340,9 +369,6 @@ void GibbsSampler::cal_delloglikelihood_example(){
 }
 
 // -----------------------------------------------------------------------------
-// Comupte the change in likelihood, DeltaLL, by first getting the proposal from
-// the atomic space, then it invokes the corresponding methods in GAPSNorm 
-// according to the proposal size.
 double GibbsSampler::computeDeltaLL(char the_matrix_label,
 				    double const * const * D,
 				    double const * const * S,
@@ -430,10 +456,7 @@ void GibbsSampler::update_example(char atomic_domain_label){
 } // end of update_example
 
 
-
 // -----------------------------------------------------------------------------
-// Construct a "newMatrix" whose mass is given by
-// newMatrix = proposed changes mapped from corresponding atomic space 
 vector<vector<double> > GibbsSampler::atomicProposal2Matrix(char atomic_domain_label,
 							    double const * const * origMatrix)
 {  
@@ -473,8 +496,6 @@ vector<vector<double> > GibbsSampler::atomicProposal2Matrix(char atomic_domain_l
 } // end of atomicProposal2Matrix
 
 // -----------------------------------------------------------------------------
-// Construct a "FullnewMatrix" whose mass is given by
-// newMatrix = origMatrix + proposed changes from corresponding atomic space 
 vector<vector<double> > GibbsSampler::atomicProposal2FullMatrix(char atomic_domain_label,
 								double const * const * origMatrix)
 {  
@@ -536,15 +557,6 @@ vector<vector<double> > GibbsSampler::atomicProposal2FullMatrix(char atomic_doma
 } // end of atomicProposal2FullMatrix
 
 // ----------------------------------------------------------------------------
-// Extract information of the proposal made in the atomic space. 
-// Assuming a _atomicProposal, this method instantiates the 
-// corresponding member variables for _matrixElemChange. In the current version, 
-// we store the new proposal (in matrix space) in two different class variables
-// of GibbsSampler:
-// 1. vector<unsigned int> _Row_changed; vector<unsigned int> _Col_changed;
-//    vector<double> _mass_changed;
-// 2. _matrixElemChange (this is a boost::tuple)
-// 
 void GibbsSampler::extract_atomicProposal(char the_matrix_label){
   unsigned int bin, chRow, chCol;
   double chmass;
@@ -642,10 +654,6 @@ void GibbsSampler::extract_atomicProposal(char the_matrix_label){
 
 
 // -----------------------------------------------------------------------------
-// Extract from _new_atomicProposal
-// The code is exactly the same as extract_atomicProposal, only using the 
-// _new-quantities for the new proposal.
-
 void GibbsSampler::extract_new_atomicProposal(char the_matrix_label){
   unsigned int bin, chRow, chCol;
   double chmass;
@@ -745,12 +753,8 @@ void GibbsSampler::extract_new_atomicProposal(char the_matrix_label){
 
 
 // -----------------------------------------------------------------------------
-// make proposal and update for the matrices
-// It output "newMatrix", which is the final product of all the steps like 
-// birth / death, or move / exchange. 
 void GibbsSampler::update(char the_matrix_label){
-  double rng = 0.1; // no use, filling up the list 
-  bool updateIterCount = true;
+  double rng = 0.1; // no use, filling up the list - CAN WE GET RID OF THIS????
   double ** D = _DMatrix.get_matrix();
   double ** S = _SMatrix.get_matrix();
   double ** AOrig = _AMatrix.get_matrix();
@@ -768,17 +772,7 @@ void GibbsSampler::update(char the_matrix_label){
       get_oper_type('A');
       _atomicProposal = _AAtomicdomain.getProposedAtoms();
       extract_atomicProposal('A');
-      
-      // ---- checking, display atomic proposal ----
-      //cout << "Inside update(), matrix: A, oper_type = " << _oper_type << endl;    
-      //map<unsigned long long, double>::iterator iter;
-      //iter = _atomicProposal.begin();
-      //cout << "Checking: _AAtomicdomain.getProposedAtoms() gives : " << endl;
-      //while(iter != _atomicProposal.end()){
-	//cout << "Bin(iter->first) = " << _AAtomicdomain.getBin(iter->first) 
-	//   << " , iter->second = " << iter->second << endl;
-	//iter++;   
-      //}
+	  
       if (_nChange_atomicProposal == 1 && (_oper_type =='E' || _oper_type =='M'))
 	{cout << "update inconsistency A1! _nChange_atomicProposal = " << _nChange_atomicProposal <<
 	         ", _nChange_matrixElemChange = " << _nChange_matrixElemChange << 
@@ -789,37 +783,31 @@ void GibbsSampler::update(char the_matrix_label){
 	         ", _oper_type = " << _oper_type << endl;}   
 
       // ----------------------------------
-      
- 
-
       // the proposal is translated into a proposal to matrix A:
-      //vector<vector<double> > proposed_A = atomicProposal2Matrix('A',AOrig);
-
-      // ----------- modifiy the proposal in a Gibbs way:      
+	  
+      // ----------- modify the proposal in a Gibbs way:      
       unsigned int iRow, iCol, iFactor;
       if ( _nChange_atomicProposal == 0){}
       if ( _nChange_atomicProposal> 2){
-	throw logic_error("GibbsSampler: can't chnage more than two atoms!!");
+	   throw logic_error("GibbsSampler: can't change more than two atoms!!");
       }
-      if (_nChange_atomicProposal == 2){
-	//del_matrix = move_exchange('A',D,S,AOrig,POrig);
-        //_AMatrix.matrix_update(del_matrix);
-        Q_update = move_exchange('A',D,S,AOrig,POrig);
-	//cout << "Q_update = " << Q_update << endl;
-	if (Q_update == true){
+	  
+	  // Update based on the _oper_type
+	  if (_oper_type == 'D') {
+	    Q_update = death('A',D,S,AOrig,POrig);
+      } else if (_oper_type == 'B') {
+	    Q_update = birth('A',D,S,AOrig,POrig);
+	  } else if (_oper_type == 'M') {
+	    Q_update = move('A',D,S,AOrig,POrig);
+      } else {
+	    Q_update = exchange('A',D,S,AOrig,POrig);
+	  }
+	  
+	  // Update the matrix with improved update, if there are further updates
+	  if (Q_update == true){
 	   _AMatrix.matrix_Elem_update(_new_matrixElemChange,_oper_type,_new_nChange_matrixElemChange);
 	}
-      }
-      if (_nChange_atomicProposal == 1){
-	//del_matrix = birth_death('A',D,S,AOrig,POrig);
-	//_AMatrix.matrix_update(del_matrix);	
-	Q_update = birth_death('A',D,S,AOrig,POrig);
-	//cout << "Q_update = " << Q_update << endl;
-	if (Q_update == true){
-	   _AMatrix.matrix_Elem_update(_new_matrixElemChange,_oper_type,_new_nChange_matrixElemChange);
-	}
-      }
- 
+	
       break;
     } // end of case 'A'
   case 'P':
@@ -830,16 +818,6 @@ void GibbsSampler::update(char the_matrix_label){
       _atomicProposal = _PAtomicdomain.getProposedAtoms();
       extract_atomicProposal('P');    
 
-     // ---- checking, display atomic proposal ----
-     //cout << "Inside update(), matrix: P, oper_type = " << _oper_type << endl;     
-      //map<unsigned long long, double>::iterator iter;
-      //iter = _atomicProposal.begin();
-      //cout << "Checking: _PAtomicdomain.getProposedAtoms() gives : " << endl;
-      //while(iter != _atomicProposal.end()){
-      //cout << "Bin(iter->first) = " << _PAtomicdomain.getBin(iter->first) 
-      //   << " , iter->second = " << iter->second << endl;
-      //iter++;
-      //}
       if (_nChange_atomicProposal == 1 && (_oper_type =='E' || _oper_type =='M'))
 	{cout << "update inconsistency P1! _nChange_atomicProposal = " << _nChange_atomicProposal <<
 	         ", _nChange_matrixElemChange = " << _nChange_matrixElemChange << 
@@ -850,54 +828,34 @@ void GibbsSampler::update(char the_matrix_label){
 	         ", _oper_type = " << _oper_type << endl;}   
 
       // ----------------------------------
-     
-
-
       // the proposal is translated into a proposal to matrix P:
-      //vector<vector<double> > proposed_P = atomicProposal2Matrix('P',POrig);
 
-      // ----------- modifiy the proposal in a Gibbs way:     
+      // ----------- modify the proposal in a Gibbs way:     
       unsigned int iRow, iCol, iFactor;
       if (_nChange_atomicProposal== 0){}
       if (_nChange_atomicProposal > 2){
-	throw logic_error("GibbsSampler: can't chnage more than two atoms!!");
+	   throw logic_error("GibbsSampler: can't chnage more than two atoms!!");
       }
-      if (_nChange_atomicProposal == 2){
-	//del_matrix = move_exchange('P',D,S,AOrig,POrig);
-	//_PMatrix.matrix_update(del_matrix);
-        Q_update = move_exchange('P',D,S,AOrig,POrig);
-	//cout << "Q_update = " << Q_update << endl;
-	if (Q_update == true){
+	  
+	  // Update based on the _oper_type
+	  if (_oper_type == 'D') {
+	    Q_update = death('P',D,S,AOrig,POrig);
+      } else if (_oper_type == 'B') {
+	    Q_update = birth('P',D,S,AOrig,POrig);
+	  } else if (_oper_type == 'M') {
+	    Q_update = move('P',D,S,AOrig,POrig);
+      } else {
+	    Q_update = exchange('P',D,S,AOrig,POrig);
+	  }
+	  
+	  if (Q_update == true){
 	   _PMatrix.matrix_Elem_update(_new_matrixElemChange,_oper_type,_new_nChange_matrixElemChange);
 	}
-      }
-      if (_nChange_atomicProposal== 1){
-	//del_matrix = birth_death('P',D,S,AOrig,POrig);
-	//_PMatrix.matrix_update(del_matrix);
-        Q_update = birth_death('P',D,S,AOrig,POrig);
-	//cout << "Q_update = " << Q_update << endl;
-	if (Q_update == true){
-	   _PMatrix.matrix_Elem_update(_new_matrixElemChange,_oper_type,_new_nChange_matrixElemChange);
-	}
-      }
 
       break;
     } // end of case 'P'
   } // end of switch block
 
-  /*
-  //  Output everything:
-  cout << "After all proposal making processes and acceptance, we have " <<
-  "the atomic spaces read: " << endl;
-  _AAtomicdomain.printAtomicInfo();
-  _PAtomicdomain.printAtomicInfo();
-  cout << endl;
-  cout << "The updated matrices read: " << endl;
-  _AMatrix.display_matrix();
-  _PMatrix.display_matrix();
- 
-  cout << endl;
-  */
   // clear Proposal for the next run
   clear_Proposal();
   clear_new_Proposal();
@@ -936,10 +894,7 @@ void GibbsSampler::get_oper_type(char the_matrix_label){
 
 }
 
-
-
-// -----------------------------------------------------------------------------
-bool GibbsSampler::birth_death(char the_matrix_label,
+bool GibbsSampler::death(char the_matrix_label,
 						  double const * const * D,
 						  double const * const * S,
 						  double ** AOrig,
@@ -947,27 +902,8 @@ bool GibbsSampler::birth_death(char the_matrix_label,
 {
 
   double rng = 0.1; // no use, just fill up the list
-  //map<unsigned long long, double> newProposal;
-  //map<unsigned long long, double> Proposal;
-  //vector<vector<double> > newMatrix, nullMatrix;  // the thing to return in birth_death()
-  //vector<vector<double> > FullnewMatrix;
   double newMass = 0;
   double attemptMass = 0;
-
-  /*
-  switch(the_matrix_label){
-  case 'A':
-    { Proposal = _AAtomicdomain.getProposedAtoms();
-      newMatrix.resize(_nRow,vector<double>(_nFactor,0.0));
-      nullMatrix.resize(_nRow,vector<double>(_nFactor,0.0));
-      break;}
-  case 'P':
-    { Proposal = _PAtomicdomain.getProposedAtoms();
-      newMatrix.resize(_nFactor,vector<double>(_nCol,0.0));
-      nullMatrix.resize(_nFactor,vector<double>(_nCol,0.0));
-      break;}
-  }
-  */
 
   // read in the original _atomicProposal made from the prior
   unsigned long long location = _atomicProposal.begin()->first;
@@ -978,44 +914,26 @@ bool GibbsSampler::birth_death(char the_matrix_label,
   double delLL = 0;
   double delLLnew = 0;
 
-  // ---------- consistency check
-  if ((origMass < 0 && _oper_type =='B') || (origMass >=0 && _oper_type == 'D')) {
-    cout << "Birth-death inconsistency!! origMass = " << origMass << 
-      ", _oper_type = " << _oper_type << endl;
-  }
-  // -----------
-
-
-  // ------------------------- DEATH -------------------------------------------
-  if (_oper_type == 'D'){
- 
+    // ------------------------- DEATH -------------------------------------------
     // put in the changes to the atomic space, and compute the corresponding change in 
     // the loglikelihood. 
     switch(the_matrix_label){
     case 'A':
       { 
-	//newMatrix = atomicProposal2Matrix('A',AOrig);
         delLL = computeDeltaLL('A',D,S,AOrig,POrig,_nChange_matrixElemChange,_matrixElemChange); 
         _AAtomicdomain.acceptProposal(false); // "false" only means not to update _iter!
-	// -----
-	update_sysChi2(delLL);  // update system Chi2
-	// -----
-	//_AMatrix.matrix_update(newMatrix);
-	_AMatrix.matrix_Elem_update(_matrixElemChange,_oper_type,_nChange_matrixElemChange);
-	//FullnewMatrix = atomicProposal2FullMatrix('A',AOrig);
-	break;}
+	    update_sysChi2(delLL); 	    // update system Chi2 
+	    _AMatrix.matrix_Elem_update(_matrixElemChange,_oper_type,_nChange_matrixElemChange);
+	    break;
+		}
     case 'P':
       { 
-	//newMatrix = atomicProposal2Matrix('P',POrig);
-	delLL = computeDeltaLL('P',D,S,AOrig,POrig,_nChange_matrixElemChange,_matrixElemChange);  
+	    delLL = computeDeltaLL('P',D,S,AOrig,POrig,_nChange_matrixElemChange,_matrixElemChange);  
         _PAtomicdomain.acceptProposal(false); // "false" only means not to update _iter!
-	// -----
-	update_sysChi2(delLL);  // update system Chi2
-	// -----
-	//_PMatrix.matrix_update(newMatrix);
-	_PMatrix.matrix_Elem_update(_matrixElemChange,_oper_type,_nChange_matrixElemChange);
-	//FullnewMatrix = atomicProposal2FullMatrix('P',POrig);
-	break;}
+	    update_sysChi2(delLL);     // update system Chi2
+	    _PMatrix.matrix_Elem_update(_matrixElemChange,_oper_type,_nChange_matrixElemChange);
+	    break;
+		}
     } // end of switch-block
      
     // an attempt to rebirth
@@ -1023,287 +941,385 @@ bool GibbsSampler::birth_death(char the_matrix_label,
     switch(the_matrix_label){
     case 'A':
       {
-        if (!performUpdateKill('A',iRow, iCol, POrig)) { 
-	  newMass = attemptMass;
-	} else {
-	  // ----
-          //FullnewMatrix = atomicProposal2FullMatrix('A',AOrig);
-	  //newMass = getMass('A',attemptMass,iRow,iCol,POrig,FullnewMatrix,D,S,rng);
-	  newMass = getMass('A',attemptMass,iRow,iCol,POrig,AOrig,D,S,rng);
-	  // ------- Q: think about it
-	  if (newMass <= epsilon) {
-	    newMass = attemptMass;
-	  }
-	} // end of if-block 
+	    // Check other matrix to see if we can use Gibbs
+        if (!checkOtherMatrix('A',iRow, iCol, POrig)) { 
+	      newMass = attemptMass;
+	    } else {
+	      newMass = getMass('A',attemptMass,iRow,iCol,POrig,AOrig,D,S,rng); //Gibbs birth
+	      // ------- Q: think about it
+	      if (newMass <= epsilon) {
+	       newMass = attemptMass;
+	      }
+	    } // end of if-block 
 
-	_new_atomicProposal.insert(pair<unsigned long long,double>(location,newMass));
-	extract_new_atomicProposal('A');
-	_AAtomicdomain.setProposedAtomMass(_new_atomicProposal,true);  
+	    _new_atomicProposal.insert(pair<unsigned long long,double>(location,newMass));
+	    extract_new_atomicProposal('A');
+	    _AAtomicdomain.setProposedAtomMass(_new_atomicProposal,true);  
         delLLnew = computeDeltaLL('A',D,S,AOrig,POrig,_new_nChange_matrixElemChange,_new_matrixElemChange);
-	break;
+	    break;
       } // end of switch-block for A
     case 'P':
       {
-	if (!performUpdateKill('P',iRow, iCol, AOrig)) { 
-	  newMass = attemptMass;
-	} else {
-	  // -----
-          //FullnewMatrix = atomicProposal2FullMatrix('P',POrig);
-	  //newMass = getMass('P',attemptMass,iRow,iCol,AOrig,FullnewMatrix,D,S,rng);
-          newMass = getMass('P',attemptMass,iRow,iCol,AOrig,POrig,D,S,rng);
-	  // ----- Q: think about it
-	  if (newMass <= epsilon) {
-	    newMass = attemptMass;
-	  }
-	} // end of if-block 
+	    // Check other matrix to see if we can use Gibbs
+	    if (!checkOtherMatrix('P',iRow, iCol, AOrig)) { 
+	      newMass = attemptMass;
+	     } else {
+          newMass = getMass('P',attemptMass,iRow,iCol,AOrig,POrig,D,S,rng); //Gibbs birth
+	      // ----- Q: think about it
+	      if (newMass <= epsilon) {
+	       newMass = attemptMass;
+	      }
+	    } // end of if-block 
 
-	_new_atomicProposal.insert(pair<unsigned long long,double>(location,newMass));
-	extract_new_atomicProposal('P');
-	_PAtomicdomain.setProposedAtomMass(_new_atomicProposal,true);
+	    _new_atomicProposal.insert(pair<unsigned long long,double>(location,newMass));
+	    extract_new_atomicProposal('P');
+	    _PAtomicdomain.setProposedAtomMass(_new_atomicProposal,true);
         delLLnew = computeDeltaLL('P',D,S,AOrig,POrig,_new_nChange_matrixElemChange,_new_matrixElemChange);
-	break;
+	    break;
       } // end of switch-block for P
 
     } // end of switch-block
-    
-    // -------- checking
-    /*
-      double delLLnew2;
-      switch(the_matrix_label){
-      case 'A':
-      {delLLnew2 = computeDeltaLL2('A',D,S,AOrig,POrig,_new_nChange_matrixElemChange,_new_matrixElemChange);
-      break;}
-      case 'P':
-      {delLLnew2 = computeDeltaLL2('P',D,S,AOrig,POrig,_new_nChange_matrixElemChange,_new_matrixElemChange);
-      break;}
-      }
-      cout << "matrix_label = " << the_matrix_label << endl;
- 
-      cout << "delLLnew = " << delLLnew << endl;
-      cout << "delLLnew2 = " << delLLnew2 << endl;
-      unsigned int chkdelLL;
-      if (fabs(delLLnew-delLLnew2) < 1.e-5){
-      chkdelLL = 1;
-      }else{
-      chkdelLL = 0;
-      }
-      cout << "chkdelLL = " << chkdelLL << endl;
 
-      cout << endl;
-    */
-    // ---------------
-
-
-
-    // M-H sampling
+    // M-H sampling to determine whether or not we can accept Gibbs
     if (delLLnew*_annealingTemperature  < log(randgen('U',0,0))) {
 
-      switch(the_matrix_label){
+     switch(the_matrix_label){
       case 'A':
-	{ _AAtomicdomain.rejectProposal(false);
-	  //return nullMatrix;
-	  return false;
-	  break;}
+	  { 
+	    _AAtomicdomain.rejectProposal(false);
+ 	    return false;
+	    break;
+      }
       case 'P':
-	{ _PAtomicdomain.rejectProposal(false);
-	  //return nullMatrix;
-	  return false;
-	  break;}
-      } // end of switch-block
-
+	  { 
+	    _PAtomicdomain.rejectProposal(false);
+	    return false;
+	    break;
+	  }
+     } // end of switch-block
+	  
     } else {
-      //newProposal.insert(pair<unsigned long long, double>(location, newMass)); 
+	
       switch(the_matrix_label){
       case 'A':
-	{ //_AAtomicdomain.setProposedAtomMass(newProposal, false);
-          //newMatrix = atomicProposal2Matrix('A',AOrig);
+	  { 
           _AAtomicdomain.acceptProposal(false); 
-	  // -----
-	  update_sysChi2(delLLnew);  // update system Chi2
-	  // -----
-	  //return newMatrix;
-	  return true;
-          break;}
+	      update_sysChi2(delLLnew);  // update system Chi2
+	      return true;
+          break;
+	   }
       case 'P':
-	{ //_PAtomicdomain.setProposedAtomMass(newProposal, false);
-          //newMatrix = atomicProposal2Matrix('P',POrig);
-          _PAtomicdomain.acceptProposal(false); 
-	  // -----	  
-	  update_sysChi2(delLLnew);  // update system Chi2
-	  // -----
-	  //return newMatrix;
-	  return true;
-          break;}
+	  {   _PAtomicdomain.acceptProposal(false);  
+	      update_sysChi2(delLLnew);  // update system Chi2
+	      return true;
+          break;
+	   }
       } // end of switch-block
     } // else of if-block for M-H sampling
-    
 
-    //return newMatrix;
     return false;    
 
-  } // end of if-block for origMass < 0 (end of death process)
- 
+}  // end of death method
+
+bool GibbsSampler::birth(char the_matrix_label,
+						  double const * const * D,
+						  double const * const * S,
+						  double ** AOrig,
+						  double ** POrig)
+{
+
+  double rng = 0.1; 
+  double newMass = 0;
+  double attemptMass = 0;
+
+  // read in the original _atomicProposal made from the prior
+  unsigned long long location = _atomicProposal.begin()->first;
+  double origMass = _atomicProposal.begin()->second;
+  unsigned int bin;
+  unsigned int iRow = _Row_changed[0];
+  unsigned int iCol = _Col_changed[0];
+  double delLL = 0;
+  double delLLnew = 0;
   
   // -------------- BIRTH ------------------------------------------------------
-  if (_oper_type == 'B'){
-
+  
     switch(the_matrix_label){
     case 'A':
       {
-	//newMatrix = atomicProposal2Matrix('A',AOrig);
-	//FullnewMatrix = atomicProposal2FullMatrix('A',AOrig);
-
-	// checking conditions for update
-	if (iRow >= _nRow || iCol >= _nFactor) {
-	  throw logic_error("Cannot update pattern out of range in A.");
-	}
-	if ( !performUpdate('A',origMass, iRow, iCol, AOrig, POrig)) {
-	  _AAtomicdomain.acceptProposal(false);
-	  // -----------
-          delLL = computeDeltaLL('A',D,S,AOrig,POrig,_nChange_matrixElemChange,_matrixElemChange);
+	   // checking conditions for update
+	   if (iRow >= _nRow || iCol >= _nFactor) {
+	    throw logic_error("Cannot update pattern out of range in A.");
+	   }
+	// Check other matrix to see if we can use Gibbs
+	if ( !checkOtherMatrix('A', iRow, iCol, POrig)) {
+	
+	  _AAtomicdomain.acceptProposal(false); //accept original proposal 
+      delLL = computeDeltaLL('A',D,S,AOrig,POrig,_nChange_matrixElemChange,_matrixElemChange);
 	  update_sysChi2(delLL);  // update system Chi2
-	  // ----------
-	  //return newMatrix;
-	  _new_atomicProposal.insert(pair<unsigned long long,double>(location,origMass));
-    	  extract_new_atomicProposal('A');
+	  _new_atomicProposal.insert(pair<unsigned long long,double>(location,origMass)); //update _new_atomicProposal with original change
+      extract_new_atomicProposal('A');
+	  
 	  return true;
-	  // ------------
-	}
-	// ------------------------
-	//FullnewMatrix[iRow][iCol] -= origMass;
-	//newMass = getMass('A',origMass,iRow,iCol,POrig,FullnewMatrix,D,S,rng);
-        newMass = getMass('A',origMass,iRow,iCol,POrig,AOrig,D,S,rng);
-	_new_atomicProposal.insert(pair<unsigned long long,double>(location,newMass));
-  	extract_new_atomicProposal('A');
-	_AAtomicdomain.setProposedAtomMass(_new_atomicProposal,false);
-        delLLnew = computeDeltaLL('A',D,S,AOrig,POrig,_new_nChange_matrixElemChange,_new_matrixElemChange);
-	// ------------------------
+	  }
+     
+	 //Otherwise, do a Gibbs birth
+     newMass = getMass('A',origMass,iRow,iCol,POrig,AOrig,D,S,rng);
+	 _new_atomicProposal.insert(pair<unsigned long long,double>(location,newMass));
+  	 extract_new_atomicProposal('A');
+	 _AAtomicdomain.setProposedAtomMass(_new_atomicProposal,false);
+     delLLnew = computeDeltaLL('A',D,S,AOrig,POrig,_new_nChange_matrixElemChange,_new_matrixElemChange);
+
 	break;
-      } // end of case-A block
+     } // end of case-A block
+	 
     case 'P':
       {
-	//newMatrix = atomicProposal2Matrix('P',POrig);
- 	//FullnewMatrix = atomicProposal2FullMatrix('P',POrig);
+	   // checking conditions for update
+	   if (iRow >= _nFactor || iCol >= _nCol) {
+	    throw logic_error("Cannot update pattern out of range in P.");
+	   }
+	   // Check other matrix to see if we can use Gibbs
+	   if ( !checkOtherMatrix('P', iRow, iCol, AOrig)) {
+	    
+		_PAtomicdomain.acceptProposal(false); // accept original proposal
+	    delLL = computeDeltaLL('P',D,S,AOrig,POrig,_nChange_matrixElemChange,_matrixElemChange);  
+  	    update_sysChi2(delLL);  // update system Chi2
+	    _new_atomicProposal.insert(pair<unsigned long long,double>(location,origMass));
+    	extract_new_atomicProposal('P');
+		
+	    return true;
+	   }
 
-	// checking conditions for update
-	if (iRow >= _nFactor || iCol >= _nCol) {
-	  throw logic_error("Cannot update pattern out of range in P.");
-	}
-	if ( !performUpdate('P',origMass, iRow, iCol, AOrig, POrig)) {
-	  _PAtomicdomain.acceptProposal(false);
-	  // -------
-	  delLL = computeDeltaLL('P',D,S,AOrig,POrig,_nChange_matrixElemChange,_matrixElemChange);  
-  	  update_sysChi2(delLL);  // update system Chi2
-	  // -----------------
-	  //return newMatrix;
-	  _new_atomicProposal.insert(pair<unsigned long long,double>(location,origMass));
-    	  extract_new_atomicProposal('P');
-	  return true;
-	  // -----------------
-	}
-	// ------------------------
-	//FullnewMatrix[iRow][iCol] -= origMass;
-	//newMass = getMass('P',origMass,iRow,iCol,AOrig,FullnewMatrix,D,S,rng);
+	   	 //Otherwise, do a Gibbs birth
         newMass = getMass('P',origMass,iRow,iCol,AOrig,POrig,D,S,rng);
-	_new_atomicProposal.insert(pair<unsigned long long,double>(location,newMass));
-  	extract_new_atomicProposal('P');
-	_PAtomicdomain.setProposedAtomMass(_new_atomicProposal,false);
+	    _new_atomicProposal.insert(pair<unsigned long long,double>(location,newMass));
+  	    extract_new_atomicProposal('P');
+	    _PAtomicdomain.setProposedAtomMass(_new_atomicProposal,false);
         delLLnew = computeDeltaLL('P',D,S,AOrig,POrig,_new_nChange_matrixElemChange,_new_matrixElemChange);
-	// ------------------------
+
 	break;
       } // end of case-P block
     } // end of switch-block
 
-    // -------- checking
-    /*
-      double delLLnew2;
-      switch(the_matrix_label){
-      case 'A':
-      {delLLnew2 = computeDeltaLL2('A',D,S,AOrig,POrig,_new_nChange_matrixElemChange,_new_matrixElemChange);
-      break;}
-      case 'P':
-      {delLLnew2 = computeDeltaLL2('P',D,S,AOrig,POrig,_new_nChange_matrixElemChange,_new_matrixElemChange);
-      break;}
-      }
-      cout << "matrix_label = " << the_matrix_label << endl;
- 
-      cout << "delLLnew = " << delLLnew << endl;
-      cout << "delLLnew2 = " << delLLnew2 << endl;
-      unsigned int chkdelLL;
-      if (fabs(delLLnew-delLLnew2) < 1.e-5){
-      chkdelLL = 1;
-      }else{
-      chkdelLL = 0;
-      }
-      cout << "chkdelLL = " << chkdelLL << endl;
-
-      cout << endl;
-    */
-    // ---------------
-
-
-
-    //newProposal.insert(pair<unsigned long long, double>(location, newMass)); 
+    
     // This incorporates the modified change only, if any.
     switch(the_matrix_label){
     case 'A':
       { 
-	//_AAtomicdomain.setProposedAtomMass(newProposal, false);
-	//newMatrix = atomicProposal2Matrix('A',AOrig);
-	_AAtomicdomain.acceptProposal(false);
-	// -----
-	update_sysChi2(delLLnew);  // update system Chi2
-	// -----
-	//return newMatrix;
-	return true;
-	break;}
+	   _AAtomicdomain.acceptProposal(false);
+	   update_sysChi2(delLLnew);  // update system Chi2
+	   return true;
+	   break;
+	   }
     case 'P':
       { 
-	//_PAtomicdomain.setProposedAtomMass(newProposal, false);
-	//newMatrix = atomicProposal2Matrix('P',POrig);
-	_PAtomicdomain.acceptProposal(false);
-	// -----
-	update_sysChi2(delLLnew);  // update system Chi2
-	// -----
-	//return newMatrix;
-	return true;
-	break;}
+	   _PAtomicdomain.acceptProposal(false);
+	   update_sysChi2(delLLnew);  // update system Chi2
+	   return true;
+	   break;
+	   }
     }
 
-    //return newMatrix;
-    return false;
-
-  } // end of if-block for origMass >=0
- 
-
-  //return newMatrix;
   return false;
-}  // end of method birth_death
 
-bool GibbsSampler::move_exchange(char the_matrix_label,
+}  // end of method birth
+
+bool GibbsSampler::move(char the_matrix_label,
 						    double const * const * D,
 						    double const * const * S,
 						    double ** AOrig,
 						    double ** POrig)// in progress
 {
+  map<unsigned long long, double>::const_iterator atom;
+  double chmass1,chmass2;       
+  unsigned long long loc1, loc2;
+  unsigned int bin1, bin2;
+  double mass1, mass2;
+  double newMass1, newMass2;
+  atom = _atomicProposal.begin();
+  chmass1 = atom->second;
+  atom++;
+  chmass2 = atom->second;
+  if (_atomicProposal.size()==1){
+  cout << "Not doing a move due to update inconsistency."<< endl;
+  return false;
+  }
 
-  /*
-  map<unsigned long long, double> newProposal;
-  map<unsigned long long, double> Proposal;
-  vector<vector<double> > newMatrix, nullMatrix;  // the thing to return in birth_death()
-
+  // extract location, bin #, mass and changed mass corresponding to the 
+  // atomic proposal such that "1" refers to a positive mass change and 
+  // "2" a negative one.  
   switch(the_matrix_label){
   case 'A':
-    { newMatrix.resize(_nRow,vector<double>(_nFactor,0.0));
-      nullMatrix.resize(_nRow,vector<double>(_nFactor,0.0));
+    {
+      if (chmass1 > chmass2) {
+	atom--;
+	loc1 = atom->first;
+	bin1 = _AAtomicdomain.getBin(loc1);
+	mass1 = _AAtomicdomain.getMass(loc1);
+	newMass1 = atom->second + mass1;
+	atom++;
+	loc2 = atom->first;
+	bin2 = _AAtomicdomain.getBin(loc2);
+	mass2 = _AAtomicdomain.getMass(loc2);
+	newMass2 = atom->second + mass2;
+      } else {
+	loc1 = atom->first;
+	bin1 = _AAtomicdomain.getBin(loc1);
+	mass1 = _AAtomicdomain.getMass(loc1);
+	newMass1 = atom->second + mass1;
+	atom--;
+	loc2 = atom->first;
+	bin2 = _AAtomicdomain.getBin(loc2);
+	mass2 = _AAtomicdomain.getMass(loc2);
+	newMass2 = atom->second + mass2;
+      }  // end of if-block for comparing chmass1 and chmass2
+      break;} // end of case 'A' block
+  case 'P':
+    {
+      if (chmass1 > chmass2) {
+	atom--;
+	loc1 = atom->first;
+	bin1 = _PAtomicdomain.getBin(loc1);
+	mass1 = _PAtomicdomain.getMass(loc1);
+	newMass1 = atom->second + mass1;
+	atom++;
+	loc2 = atom->first;
+	bin2 = _PAtomicdomain.getBin(loc2);
+	mass2 = _PAtomicdomain.getMass(loc2);
+	newMass2 = atom->second + mass2;
+      } else {
+	loc1 = atom->first;
+	bin1 = _PAtomicdomain.getBin(loc1);
+	mass1 = _PAtomicdomain.getMass(loc1);
+	newMass1 = atom->second + mass1;
+	atom--;
+	loc2 = atom->first;
+	bin2 = _PAtomicdomain.getBin(loc2);
+	mass2 = _PAtomicdomain.getMass(loc2);
+	newMass2 = atom->second + mass2;
+      }  // end of if-block for comparing chmass1 and chmass2
+      break;}  // end of case 'P' block
+  } // end of switch-block for extracting the atomic proposal info
+
+  // return false if bin1 == bin2
+  if (bin1 == bin2){
+    // cout << "Exchanges in the same bin!! So, no change!" << endl;
+    //return nullMatrix;
+    return false;
+  }
+  
+  // All code having to do with exchange action was deleted here
+  // Because we never use Gibbs in move, we automatically move right to
+  // Metropolis-Hastings move action 
+
+  // preparing quantities for possible Gibbs computation later.
+     double priorLL = 0.;
+
+  // Metropolis-Hasting move action
+
+  //double pold = 0.; These quantities not necessary in move action 
+  //double pnew = 0.;
+  double lambda;
+  switch(the_matrix_label){
+  case 'A':
+    {lambda = _lambdaA;
       break;}
   case 'P':
-    { newMatrix.resize(_nFactor,vector<double>(_nCol,0.0));
-      nullMatrix.resize(_nFactor,vector<double>(_nCol,0.0));
+    {lambda = _lambdaP;
       break;}
   }
-  */
+
+  /*if (pnew == 0. && pold == 0.) {
+    priorLL = 0.0;
+  } else if(pnew != 0. && pold == 0.) {
+    priorLL = DOUBLE_POSINF;
+  } else {
+    priorLL = log(pnew / pold);
+  } */
+	 
+  double delLLnew;
+  switch(the_matrix_label){
+  case 'A':
+    {delLLnew = computeDeltaLL('A',D,S,AOrig,POrig,_nChange_matrixElemChange,_matrixElemChange);
+      break;}
+  case 'P':
+    {delLLnew = computeDeltaLL('P',D,S,AOrig,POrig,_nChange_matrixElemChange,_matrixElemChange);
+      break;}
+  }
+
+  double totalLL = priorLL + delLLnew * _annealingTemperature;
+
+  _new_nChange_matrixElemChange = 2;
+  _new_atomicProposal.insert(pair<unsigned long long, double>(loc1,newMass1-mass1));
+  _new_atomicProposal.insert(pair<unsigned long long, double>(loc2,newMass2-mass2));
+  switch(the_matrix_label){
+  case 'A': {
+    extract_new_atomicProposal('A');
+    break;
+   }
+  case 'P': {
+    extract_new_atomicProposal('P');
+    break;
+   }
+  }
+
+  double tmp;
+  /*if (priorLL == DOUBLE_POSINF){ priorLL is always 0 in move
+    //return newMatrix;
+    return true;
+  } else { */
+    tmp = priorLL + delLLnew*_annealingTemperature;
+  //}
+
+  double rng = log(randgen('U',0,0));
  
+    if (tmp < rng) {
+      switch(the_matrix_label){
+      case 'A':
+	  { 
+	  _AAtomicdomain.rejectProposal(false);
+	  return false;
+	  break;
+	  }
+      case 'P':
+	  {
+	  _PAtomicdomain.rejectProposal(false);
+	  return false;
+	  break;
+	  }
+     } // end of switch-block
+    } else { 
+      switch(the_matrix_label){
+      case 'A':
+	  { 	  
+	   _AAtomicdomain.acceptProposal(false); 
+	   update_sysChi2(delLLnew);  // update system Chi2
+	   return true;
+	   break;
+	  }
+      case 'P':
+	  {           
+	   _PAtomicdomain.acceptProposal(false); 
+	   update_sysChi2(delLLnew);  // update system Chi2
+	   return true;
+	   break;
+	  }
+     } // end of switch-block       
+    }  
+ 
+
+  // end of M-H sampling
+
+ return false;
+ 
+} // end of method move
+
+bool GibbsSampler::exchange(char the_matrix_label,
+						    double const * const * D,
+						    double const * const * S,
+						    double ** AOrig,
+						    double ** POrig)// in progress
+{
   map<unsigned long long, double>::const_iterator atom;
   double chmass1,chmass2;       
   unsigned long long loc1, loc2;
@@ -1373,8 +1389,6 @@ bool GibbsSampler::move_exchange(char the_matrix_label,
 
   // return nullMatrix if bin1 == bin2
   if (bin1 == bin2){
-    // cout << "Exchanges in the same bin!! So, no change!" << endl;
-    //return nullMatrix;
     return false;
   }
 
@@ -1386,7 +1400,6 @@ bool GibbsSampler::move_exchange(char the_matrix_label,
   unsigned int jGene, jSample, jPattern;
   bool anyNonzero = false;
   bool useGibbs = true;
-
 
   unsigned int iGene1, iPattern1, iGene2, iPattern2, iSample1, iSample2;
   switch(the_matrix_label){
@@ -1447,128 +1460,59 @@ bool GibbsSampler::move_exchange(char the_matrix_label,
   // -------------------------------------------------------------------------
   // EXCHANGE ACTION when initial useGibbs = true and check if Gibbs is usable.
 
-  double s = 0.0;
-  double su = 0.0;
-  double mock = 0.0;
-  double mock1 = 0.0;
-  double mock2 = 0.0;
-  double mean = 0; 
-  double sd = 0;
-  double gibbsMass1, gibbsMass2;
+  double s, su, mean, sd;
+  pair <double, double> alphaparam;
 
   if (useGibbs == true){
 
     switch(the_matrix_label){
-    case 'A':{
-      // ---------- EXCHANGE ACTION WITH A ----------------------------
-      if (_AAtomicdomain.inDomain(loc1) && _AAtomicdomain.inDomain(loc2)) 
-
+	
+	// ---------- EXCHANGE ACTION WITH A ----------------------------
+    case 'A':
 	{
-	  exchange = true;
-
-	  double Aeff;
-	  // compute the distribution parameters
-	  if (iGene1 == iGene2) {
-	    for (jSample = 0; jSample < _nCol; jSample++) {
-	      // Calculate the mock term
-	      mock = D[iGene1][jSample];
-	      for (jPattern = 0; jPattern < _nFactor; jPattern++) {
-		Aeff = AOrig[iGene1][jPattern];
-		mock -= Aeff * POrig[jPattern][jSample];
-	      } // end of for-block that make changes to elements in A
-
-	      s += ( ( POrig[iPattern1][jSample]-POrig[iPattern2][jSample] ) *
-		     ( POrig[iPattern1][jSample]-POrig[iPattern2][jSample] ) ) /
-		pow(S[iGene1][jSample],2);
-	      su += mock *( POrig[iPattern1][jSample]-POrig[iPattern2][jSample] ) /
-		pow( S[iGene1][jSample],2);
-	    }
-	  }  // end of case iGene1 = iGene2
-	  else  { // iGene1 != iGene2 
-	    for (jSample = 0; jSample < _nCol; jSample++) {
-	      mock1 = D[iGene1][jSample];
-	      mock2 = D[iGene2][jSample]; 
-
-	      for (jPattern = 0; jPattern < _nFactor; jPattern++) {
-		Aeff = AOrig[iGene1][jPattern];
-		mock1 -= Aeff * POrig[jPattern][jSample];
-		Aeff = AOrig[iGene2][jPattern];
-		mock2 -= Aeff * POrig[jPattern][jSample];
-	      } // end of for-block for adding changes to A
-
-	      s  += pow(POrig[iPattern1][jSample] / S[iGene1][jSample],2) +
-		pow(POrig[iPattern2][jSample] / S[iGene2][jSample],2);
-	      su += mock1*POrig[iPattern1][jSample]/pow(S[iGene1][jSample],2) -
-		mock2*POrig[iPattern2][jSample]/pow(S[iGene2][jSample],2);
-	    }
-	  } // end of if-block for calculating s and su for case 'A'
+	 if (_AAtomicdomain.inDomain(loc1) && _AAtomicdomain.inDomain(loc2))
+	 {
+      alphaparam = GAPSNorm::calcAlphaParameters('A', _nRow, _nCol, _nFactor, D, S, AOrig, POrig, iGene1, 
+	                                              iPattern1, iGene2, iPattern2, iSample1, iSample2);
+	   s = alphaparam.first;
+	   su = alphaparam.second;
 
 	  s = s * _annealingTemperature;
 	  su = su * _annealingTemperature; 
 	  mean = su / s;
 	  sd = 1./sqrt(s);
-	  // end of compute distribution parameters for A	       
+	   // end of compute distribution parameters for A	       
 
-	}  // end of if-block for checking whether the changes are in domain (the exchange block)
+	  } // end of if-block for checking whether the changes are in domain (the exchange block)
 	
-      break;} // end of switch block for EXCHANGE ACTION with A
-      // ---------- EXCHANGE ACTION WITH P ----------------------------
-    case 'P': {
+      break;
+	  } // end of switch block for EXCHANGE ACTION with A
+      
+	  // ---------- EXCHANGE ACTION WITH P ----------------------------
+    case 'P': 
+	{
       if (_PAtomicdomain.inDomain(loc1) && _PAtomicdomain.inDomain(loc2)) 
-
-	{
-	  exchange = true;
-
-	  double Peff;
-	  // compute the distribution parameters
-	  if (iSample1 == iSample2) {
-	    for (jGene = 0; jGene < _nRow; jGene++) {
-	      // Calculate the mock term
-	      mock = D[jGene][iSample1];
-	      for (jPattern = 0; jPattern < _nFactor; jPattern++) {
-		Peff = POrig[jPattern][iSample1];
-		mock -=  AOrig[jGene][jPattern]*Peff;
-	      } // end of for-block that make changes to elements in P
-
-	      s += pow( ((AOrig[jGene][iPattern1]-AOrig[jGene][iPattern2])/
-			 S[jGene][iSample1]),2);
-	      su += mock *( AOrig[jGene][iPattern1]-AOrig[jGene][iPattern2] ) /
-		pow( S[jGene][iSample1],2);
-	    }
-	  }  // end of case iSample1 = iSample2
-	  else  { // iSample1 != iSample2 
-	    for (jGene = 0; jGene < _nRow; jGene++) {
-	      mock1 = D[jGene][iSample1];
-	      mock2 = D[jGene][iSample2]; 
-
-	      for (jPattern = 0; jPattern < _nFactor; jPattern++) {
-		Peff = POrig[jPattern][iSample1];
-		mock1 -= AOrig[jGene][jPattern]*Peff;
-		Peff = POrig[jPattern][iSample2];
-		mock2 -= AOrig[jGene][jPattern]*Peff;
-	      } // end of for-block for adding changes to P
-
-	      s  += pow(AOrig[jGene][iPattern1] / S[jGene][iSample1],2) +
-		pow(AOrig[jGene][iPattern2] / S[jGene][iSample2],2);
-	      su += mock1*AOrig[jGene][iPattern1]/pow(S[jGene][iSample1],2) -
-		mock2*AOrig[jGene][iPattern2]/pow(S[jGene][iSample2],2);
-	    }
-	  } // end of if-block for calculating s and su for case 'P'
+      {
+      alphaparam = GAPSNorm::calcAlphaParameters('P', _nRow, _nCol, _nFactor, D, S, AOrig, POrig, iGene1, 
+	                                              iPattern1, iGene2, iPattern2, iSample1, iSample2);
+	   s = alphaparam.first;
+	   su = alphaparam.second;
 
 	  s = s * _annealingTemperature;
 	  su = su * _annealingTemperature; 
 	  mean = su / s;
 	  sd = 1./sqrt(s);
-	  // end of compute distribution parameters for P	       
+	  
+	   // end of compute distribution parameters for P      
 
-	}  // end of if-block for checking whether the changes are in domain (the exchange block)
+	  } // end of if-block for checking whether the changes are in domain (the exchange block)
 	
-      break;} // end of switch block for EXCHANGE ACTION with P
+      break;
+	 } // end of switch block for EXCHANGE ACTION with P
  
-    } // end of switch block for EXCHANGE ACTION
+    }// end of switch block for EXCHANGE ACTION
 
   } // end of if-block for operations with possibly Gibbs sampling
-
 
   if (s == 0. && su == 0.){
     useGibbs = false;
@@ -1576,12 +1520,10 @@ bool GibbsSampler::move_exchange(char the_matrix_label,
   }
 
   // -------------------------------------------------------------------------
- 
   if(useGibbs == true){
 
     // set newMass1	 
     // need to retain exponential prior
-    //double mean = (2.*_annealingTemperature*su - lambda) / 
     double plower = sub_func::pnorm(-mass1, mean, sd, DOUBLE_NEGINF, 0);
     double pupper = sub_func::pnorm(mass2, mean, sd, DOUBLE_NEGINF, 0);
     double u = plower + randgen('U',0,0)*(pupper - plower);
@@ -1596,6 +1538,8 @@ bool GibbsSampler::move_exchange(char the_matrix_label,
       useGibbs = false;
 
     }
+	
+	double gibbsMass1, gibbsMass2;
 
     if (useGibbs == true){
 
@@ -1611,53 +1555,27 @@ bool GibbsSampler::move_exchange(char the_matrix_label,
       _new_atomicProposal.insert(pair<unsigned long long, double>(loc2,gibbsMass2));
       switch(the_matrix_label){
       case 'A':
-	{
+	 {
 	  extract_new_atomicProposal('A');
 	  delLLnew = computeDeltaLL('A',D,S,AOrig,POrig,_new_nChange_matrixElemChange,_new_matrixElemChange);
 	  _AAtomicdomain.setProposedAtomMass(_new_atomicProposal, false);
-	  //newMatrix = atomicProposal2Matrix('A',AOrig);
 	  _AAtomicdomain.acceptProposal(false); 
-  	  // -----
 	  update_sysChi2(delLLnew);  // update system Chi2
-	  // -----
-	  break;}
+	  
+	  break;
+	  }
       case 'P':
-	{
+	 {
 	  extract_new_atomicProposal('P');
 	  delLLnew = computeDeltaLL('P',D,S,AOrig,POrig,_new_nChange_matrixElemChange,_new_matrixElemChange);
 	  _PAtomicdomain.setProposedAtomMass(_new_atomicProposal, false);
-	  //newMatrix = atomicProposal2Matrix('P',POrig);
 	  _PAtomicdomain.acceptProposal(false);
- 	  // -----
 	  update_sysChi2(delLLnew);  // update system Chi2
-	  // -----
-	  break;}
-      }  // end of switch-block       
-      // return newMatrix;
-      /*
-      // ---- checking Gibbs in exchange
-      cout << " ---------------------------------- " << endl;
-      cout << " Check Gibbs Exchange: " << endl;
-      cout << "s = " << s << ", su = " << su << ", mean = " << mean << ", sd = " << sd << endl;
-      cout << "Exchange with matrix: " << the_matrix_label << ", gibbsMass1 = " << gibbsMass1 
-           << ", gibbsMass2 = " << gibbsMass2 
-	   << ", delLLnew = " << delLLnew << endl;
-      //if(fabs(delLLnew) > 500.0 ){
-	for (unsigned int m = 0; m < 2; ++m ){
-	  cout << "chRow[" << m << "] = " << _new_Row_changed[m] << ", chCol[" << m << "] = " 
-               << _new_Col_changed[m] << ", mass changed = " << _new_mass_changed[m] << endl; 
-	}
-	display_matrix('A');
-	display_matrix('P');
-        if (fabs(delLLnew) > 500.0 ){
-            cout << "delLLNew bigger than 500! " << endl;
-        }
-
-	//}
-	*/
-      // ----------------
+	  break;
+	  }
+     }  // end of switch-block       
+      
       return true;
-
 
     } // end of inner if-block for final updating with Gibbs
 
@@ -1665,7 +1583,8 @@ bool GibbsSampler::move_exchange(char the_matrix_label,
 
 
   // ----------------------------
-  // Metropolis-Hasting
+  // We can't use Gibbs, need
+  // Metropolis-Hasting exchange action
 
   double pold = 0.;
   double pnew = 0.;
@@ -1679,7 +1598,7 @@ bool GibbsSampler::move_exchange(char the_matrix_label,
       break;}
   }
   
-  if (_oper_type == 'E'){
+  // Formerly the if(_oper_type == 'E') block in move_exchange
     if (mass1 > mass2) {
       pnew = sub_func::dgamma(newMass1, 2., 1./lambda, false);
       if (newMass1 > newMass2) {
@@ -1695,30 +1614,9 @@ bool GibbsSampler::move_exchange(char the_matrix_label,
 	pold = sub_func::dgamma(mass2, 2., 1./lambda, false);
       }
     }  
-  } // end of if-block for Exchange
 
-  /*
-  if(_oper_type == 'M'){
-    
-      if (mass1 > mass2) {
-      pnew = newMass1;
-      if (newMass1 > newMass2) {
-      pold = mass1;
-      } else {
-      pold = mass2;
-      }
-      } else {
-      pnew = newMass2;
-      if (newMass1 > newMass2) {
-      pold = mass1;
-      } else {
-      pold = mass2;
-      }
-      } 
-   
-  } // end of if-block for move
-  */
 
+  
   if (pnew == 0. && pold == 0.) {
     priorLL = 0.0;
   } else if(pnew != 0. && pold == 0.) {
@@ -1737,48 +1635,6 @@ bool GibbsSampler::move_exchange(char the_matrix_label,
       break;}
   }
 
-  // -------- checking
-  /*
-    double delLLnew2;
-    switch(the_matrix_label){
-    case 'A':
-    {delLLnew2 = computeDeltaLL2('A',D,S,AOrig,POrig,_nChange_matrixElemChange,_matrixElemChange);
-    break;}
-    case 'P':
-    {delLLnew2 = computeDeltaLL2('P',D,S,AOrig,POrig,_nChange_matrixElemChange,_matrixElemChange);
-    break;}
-    }
-    cout << "matrix_label = " << the_matrix_label << endl;
-    cout << "_oper_type = " << _oper_type << endl;
-    cout << "delLLnew = " << delLLnew << endl;
-    cout << "delLLnew2 = " << delLLnew2 << endl;
-    unsigned int chkdelLL;
-    if (fabs(delLLnew-delLLnew2) < 1.e-5){
-    chkdelLL = 1;
-    }else{
-    chkdelLL = 0;
-    }
-    cout << "chkdelLL = " << chkdelLL << endl;
-
-    switch(the_matrix_label){
-    case 'A':
-    {
-    cout << "iGene1 = " << iGene1 << endl;
-    cout << "iGene2 = " << iGene2 << endl;
-    break;
-    }
-    case 'P':
-    {
-    cout << "iSample1 = " << iSample1 << endl;
-    cout << "iSample2 = " << iSample2 << endl;
-    break;
-    }
-    }
-
-    cout << endl;
-  */
-  // ---------------
-
   double totalLL = priorLL + delLLnew * _annealingTemperature;
 
   _new_nChange_matrixElemChange = 2;
@@ -1786,12 +1642,10 @@ bool GibbsSampler::move_exchange(char the_matrix_label,
   _new_atomicProposal.insert(pair<unsigned long long, double>(loc2,newMass2-mass2));
   switch(the_matrix_label){
   case 'A': {
-    //newMatrix = atomicProposal2Matrix('A',AOrig);
     extract_new_atomicProposal('A');
     break;
   }
   case 'P': {
-    //newMatrix = atomicProposal2Matrix('P',POrig);
     extract_new_atomicProposal('P');
     break;
   }
@@ -1799,7 +1653,6 @@ bool GibbsSampler::move_exchange(char the_matrix_label,
 
   double tmp;
   if (priorLL == DOUBLE_POSINF){
-    //return newMatrix;
     return true;
   } else {
     tmp = priorLL + delLLnew*_annealingTemperature;
@@ -1807,17 +1660,14 @@ bool GibbsSampler::move_exchange(char the_matrix_label,
 
   double rng = log(randgen('U',0,0));
 
-  if (_oper_type == 'E'){
     if (tmp  < rng) {
       switch(the_matrix_label){
       case 'A':
 	{ _AAtomicdomain.rejectProposal(false);
-	  //return nullMatrix;
 	  return false;
 	  break;}
       case 'P':
 	{ _PAtomicdomain.rejectProposal(false);
-	  //return nullMatrix;
 	  return false;
 	  break;}
       } // end of switch-block
@@ -1826,78 +1676,26 @@ bool GibbsSampler::move_exchange(char the_matrix_label,
       switch(the_matrix_label){
       case 'A':
 	{ 	  
-          _AAtomicdomain.acceptProposal(false); 
-	  // -----
+      _AAtomicdomain.acceptProposal(false); 
 	  update_sysChi2(delLLnew);  // update system Chi2
-	  // -----
-	  //return newMatrix;
 	  return true;
           break;
         }
       case 'P':
 	{           
-          _PAtomicdomain.acceptProposal(false); 
-	   // -----
+        _PAtomicdomain.acceptProposal(false); 
 	   update_sysChi2(delLLnew);  // update system Chi2
-	   // -----
-	  //return newMatrix;
-	  return true;
+	   return true;
           break;
         }
       } // end of switch-block       
     }  
-  } // end of the M-H determination block for _oper_type = E
-
- 
-  if (_oper_type == 'M'){
-    if (tmp < rng) {
-      switch(the_matrix_label){
-      case 'A':
-	{ _AAtomicdomain.rejectProposal(false);
-	  //return nullMatrix;
-	  return false;
-	  break;}
-      case 'P':
-	{ _PAtomicdomain.rejectProposal(false);
-	  //return nullMatrix;
-	  return false;
-	  break;}
-      } // end of switch-block
-    } else { 
-      switch(the_matrix_label){
-      case 'A':
-	{ 	  
-	  _AAtomicdomain.acceptProposal(false); 
-	  // -----
-	  update_sysChi2(delLLnew);  // update system Chi2
-	  // -----
-	  //return newMatrix;
-	  return true;
-	  break;
-	}
-      case 'P':
-	{           
-	  _PAtomicdomain.acceptProposal(false); 
-	  // -----
-	  update_sysChi2(delLLnew);  // update system Chi2
-	  // -----
-	  //return newMatrix;
-	  return true;
-	  break;
-	}
-      } // end of switch-block       
-    }  
-  } // end of the M-H determination block for _oper_type = M
- 
 
   // end of M-H sampling
  
-  // ----------
-
-  //return nullMatrix;
   return false;
 
-} // end of method move_exchange
+} // end of method exchange
 
 
 // ************ METHODS FOR LOOPING AND CONTROL *****************************
@@ -1911,8 +1709,6 @@ double GibbsSampler::get_AnnealingTemperature(){
 
 
 // -----------------------------------------------------------------------------
-// Calculate the _new annealingTemperature as a function of iteration step _iter.
-// (Note: the annealingTemperature here is really the inverted temperature!)
 void GibbsSampler::set_AnnealingTemperature() { 
   double SASteps = _nEquil;
   double SATemp = ( (double) _iter + 1. ) / (SASteps / 2.);
@@ -1954,22 +1750,11 @@ void GibbsSampler::check_atomic_matrix_consistency(char the_matrix_label)
     cout << "total matrix mass = " << total_matrix_mass << endl;
     cout << "Oper_type = " << _oper_type << endl;
     throw logic_error("Mass inconsistency between atomic domain and matrix!");
-  } //else {
-    //cout << "Things beautiful! Total mass difference = " << diff_total_mass << endl << endl;
-    //} 
+  } 
   
 }
 
 // -----------------------------------------------------------------------------
-// Here we form the matrices _Amean, _Asd, _Pmean, _Psd. They are temporary 
-// matrices to be modified in compute_statistics() to calculate the means and the variances
-// of individual matrix entries. Note tha here we have cumulated to each matrix element all its
-// realizations in time as:
-// _Amean_{ij} = \sum_{t} A_{ij}*k_{j} 
-// _Asd_{ij} = \sum_{t}  (A_{ij}*k_{j} )^2
-// _Pmean_{ij} = \sum_{t} P_{ij}/k_{i} 
-// _Psd_{ij} = \sum_{t}  (P_{ij}/k_{i} )^2
-
 void GibbsSampler::compute_statistics_prepare_matrices(unsigned long statindx){
 
   double ** A = _AMatrix.get_matrix();
@@ -2058,38 +1843,16 @@ void GibbsSampler::compute_statistics_prepare_matrices(unsigned long statindx){
 
   } // end of if-block for matrix incrementation statindx > 1
 
-  /*
-    cout << "statinx = " << statindx << endl;
-    cout << " A = " << endl;
-    local_display_matrix2(A,_nRow,_nFactor);
-    cout << " Amean = " << endl;
-    local_display_matrix2(_Amean,_nRow,_nFactor);
-    cout << " Asd = " << endl;
-    local_display_matrix2(_Asd,_nRow,_nFactor);
-    for (int m=0; m < _nFactor ; ++m){
-    cout << "k" << m << " = " << k[m] << endl;
-    }
-    cout << " P = " << endl;
-    local_display_matrix2(P,_nFactor,_nCol);
-    cout << " Pmean = " << endl;
-    local_display_matrix2(_Pmean,_nFactor,_nCol);
-    cout << " Psd = " << endl;
-    local_display_matrix2(_Psd,_nFactor,_nCol);
-  */  
-
 } // end of method compute_statistics_prepare_matrices
 
 // -----------------------------------------------------------------------------
-// Here, we use the matrices prepared in compute_statistics_prepare_matrices()
-// to compute the means and variances of individual elements in A and P.
 void GibbsSampler::compute_statistics(char outputFilename[],
                                       char outputAmean_Filename[],char outputAsd_Filename[],
                                       char outputPmean_Filename[],char outputPsd_Filename[],
-				      char outputAPmean_Filename[],
+				                      char outputAPmean_Filename[],
                                       unsigned int Nstat){
 
   // compute statistics for A
-
   for (int m=0; m < _nRow ; ++m){
     for (int n=0; n<_nFactor; ++n){
       _Amean[m][n] = _Amean[m][n] / Nstat;
@@ -2188,57 +1951,80 @@ void GibbsSampler::compute_statistics(char outputFilename[],
 }
 
 
+void GibbsSampler::compute_statistics(unsigned int Nstat,
+									vector<vector <double> > &AMeanVect,
+									vector<vector <double> > &AStdVect,
+									vector<vector <double> > &PMeanVect,
+									vector<vector <double> > &PStdVect
+									)
+{
+	//Conor's Code for resizing the vectors corresponding to each matrix
+	AMeanVect.resize(_nRow);
+	for (int i = 0; i < _nRow; i++)
+	{
+		AMeanVect[i].resize(_nFactor);
+	}
+	AStdVect.resize(_nRow);
+	for (int i = 0; i < _nRow; i++)
+	{
+		AStdVect[i].resize(_nFactor);
+	}
+	PMeanVect.resize(_nFactor);
+	for (int i = 0; i < _nFactor; i++)
+	{
+		PMeanVect[i].resize(_nCol);
+	}
+	PStdVect.resize(_nFactor);
+	for (int i = 0; i < _nFactor; i++)
+	{
+		PStdVect[i].resize(_nCol);
+	}  //End vector resizing
+	
+	
+  // compute statistics for A
+	//Variable for holding temp Calculations
+	double tempStat;
+
+	//Changed to also add to Conor's Vector
+  for (int m=0; m < _nRow ; ++m){
+    for (int n=0; n<_nFactor; ++n){
+		tempStat = _Amean[m][n] / Nstat;
+      _Amean[m][n] = tempStat;
+	  AMeanVect[m][n] = tempStat;
+    }
+  }
+  for (int m=0; m < _nRow ; ++m){
+    for (int n=0; n<_nFactor; ++n){
+      tempStat = sqrt((_Asd[m][n] - Nstat*pow(_Amean[m][n],2)) / (Nstat-1));
+	  _Asd[m][n] = tempStat;
+	  AStdVect[m][n] = tempStat;
+    }
+  }
+
+  // compute statistics for P
+  for (int m=0; m < _nFactor ; ++m){
+    for (int n=0; n<_nCol; ++n){
+      tempStat = _Pmean[m][n] / Nstat;
+	  _Pmean[m][n] = tempStat;
+	  PMeanVect[m][n] = tempStat;
+    }
+  }
+
+  for (int m=0; m < _nFactor ; ++m){
+    for (int n=0; n<_nCol; ++n){
+      tempStat = sqrt((_Psd[m][n] - Nstat*pow(_Pmean[m][n],2)) / (Nstat-1));
+	  _Psd[m][n] = tempStat;
+	  PStdVect[m][n] = tempStat;
+    }
+  }
+}
+
+
 
 // *****************************************************************************
 // Adaptation from the original code:
 
-// -----------------------------------------------------------------------------
-bool GibbsSampler::performUpdate(char the_matrix_label, double origMass, 
-				 unsigned int iRow, unsigned int iCol,
-				 double const * const * A, double const * const * P) {
-
-  unsigned int otherDim;
-  bool nonZero = false;
-  double llike;
-
-  switch(the_matrix_label){
-
-    // check that there is mass for this pattern in the P Matrix
-  case 'A': 
-    {
-      for (otherDim = 0; otherDim < _nCol; otherDim++) {
-	if (P[iCol][otherDim] > epsilon) {
-	  nonZero = true;
-	}
-      }
-      if (!nonZero) return false;
-      if (origMass < 0) {
-	throw logic_error("Should not be checking death during birth update.");
-      }
-      break;
-    } // end of case 'A'
-
-    // check that there is mass for this pattern in the A Matrix
-  case 'P': 
-    {
-      for (otherDim = 0; otherDim < _nRow; otherDim++) {
-	if (A[otherDim][iRow] > epsilon) {
-	  nonZero = true;
-	}
-      }
-      if (!nonZero) return false;      
-      if (origMass < 0) {
-	throw logic_error("Should not be checking death during birth update.");
-      }
-      break;
-    } // end of case 'P'
-  } // end of switch
-
-  return true;
-} // end of performUpdate
-
-// -----------------------------------------------------------------------------
-bool GibbsSampler::performUpdateKill(char the_matrix_label, unsigned int iRow, unsigned int iCol,
+bool GibbsSampler::checkOtherMatrix(char the_matrix_label, unsigned int iRow, unsigned int iCol,
 				     double const * const * otherMatrix){
 
   unsigned int otherDim;
@@ -2277,172 +2063,7 @@ bool GibbsSampler::performUpdateKill(char the_matrix_label, unsigned int iRow, u
   return true; 
 }
 
-// -----------------------------------------------------------------------------
-/*
-double GibbsSampler::getMass(char the_matrix_label, double origMass,
-			     unsigned int iRow,
-			     unsigned int iCol,
-			     double const * const * otherMatrix, 
-			     const vector<vector<double> > & currentChainMatrix,
-			     double const * const * D, double const * const * S,
-			     double rng)
-{
-  double DOUBLE_POSINF = numeric_limits<double>::max();
-  unsigned int iGene, iPattern, iSample, jPattern;
-  double lambda;
-
-  switch(the_matrix_label)
-    {
-    case 'A': 
-      {
-	iGene = iRow;
-	iPattern = iCol;
-	lambda = _AAtomicdomain.getLambda();
-	break;
-      }
-    case 'P': 
-      {
-	iPattern = iRow;
-	iSample = iCol;
-	lambda = _PAtomicdomain.getLambda();
-	break;
-      }
-    }
-
-  bool anyNonzero = false;
-
-  // determine the parameters for finding the mass
-  double s  = 0.;
-  double su = 0.;
-  double mock;
-
-  switch(the_matrix_label){
-
-  case 'A': 
-    {
-      double Aeff;
-      for (iSample = 0; iSample < _nCol; iSample++) 
-	{
-	  mock = D[iGene][iSample];
-	  for (jPattern = 0; jPattern <_nFactor; jPattern++) 
-	    {
-	      Aeff = currentChainMatrix[iGene][jPattern];
-	      if (jPattern == iPattern && origMass < 0) 
-		{
-		  Aeff -= origMass;
-		}
-	      mock -= Aeff * otherMatrix[jPattern][iSample];
-	      if (otherMatrix[jPattern][iSample] > epsilon) 
-		{
-		  anyNonzero = true;
-		}
-	    }
-	  s += _annealingTemperature * 
-	    (otherMatrix[iPattern][iSample] * 
-	     otherMatrix[iPattern][iSample]) /
-	    (2*S[iGene][iSample]*S[iGene][iSample]);
-	  su += _annealingTemperature * 
-	    otherMatrix[iPattern][iSample]*mock /
-	    (2*S[iGene][iSample]*S[iGene][iSample]);	    
-	}
-      break;
-    }
-
-  case 'P': 
-    {
-      double Peff;
-      for (iGene = 0; iGene < _nRow; iGene++) 
-	{
-	  mock = D[iGene][iSample];
-	  for (jPattern = 0; jPattern < _nFactor; jPattern++) 
-	    {
-	      Peff = currentChainMatrix[jPattern][iSample];
-	      if (jPattern == iPattern && origMass < 0) 
-		{
-		  Peff -= origMass;
-		}
-	      mock -= otherMatrix[iGene][jPattern] * Peff;
-
-	      if (otherMatrix[iGene][jPattern] > epsilon) 
-		{
-		  anyNonzero= true;
-		}
-	    }
-	  s += _annealingTemperature * 
-	    (otherMatrix[iGene][iPattern]*otherMatrix[iGene][iPattern]) / 
-	    (2*S[iGene][iSample]*S[iGene][iSample]);
-	  su += _annealingTemperature * otherMatrix[iGene][iPattern]*mock / 
-	    (2*S[iGene][iSample]*S[iGene][iSample]);
-	}
-      break;
-    }
-
-  }
-
-    
-  double mean  = (2*su - lambda)/(2*s);
-  double sd = 1./sqrt(2*s);
-    
-  // note: is bounded below by zero so have to use inverse sampling!
-  // based upon algorithm in DistScalarRmath.cc (scalarRandomSample)
-
-  double plower = sub_func::pnorm(0., mean, sd, DOUBLE_NEGINF, 0);
-  double pupper = 1.;
-  double u = plower + randgen('U',0,0) * (pupper - plower);
-  // -------------------------------------------------------------
-  // this line seems to be misplaced.
-  // double newMass = sub_func::qnorm(u, mean, sd, DOUBLE_NEGINF, 0);
-  double newMass = 0;
-  // ------------------
-
-  // if the likelihood is flat and nonzero, 
-  // force to sample strictly from the prior
-  if ( plower == 1 || s < 1.e-5 || newMass == DOUBLE_POSINF || pupper == 0) { 
-    if (origMass < 0) {    // death case
-      newMass = abs(origMass);
-    } else {
-      newMass = 0.;  // birth case
-    }
-  } // end of first comparison
-  else if (plower >= 0.99) {
-    double tmp1 = sub_func::dnorm(0, mean, sd, false); 
-    double tmp2 = sub_func::dnorm(10*lambda, mean, sd, false);
-    if ( (tmp1 > epsilon) && (fabs(tmp1-tmp2) < epsilon) )   {
-      if (origMass < 0) {   // death case
-	return 0.;
-      }
-      return origMass;   // birth case
-    }  
-  } // end of second comparison
-  else {
-    newMass = sub_func::qnorm(u, mean, sd, DOUBLE_NEGINF, 0);  // both death and birth
-  }  // end of if-block for the remaining case
-
-
-  // limit the mass range
-    switch(the_matrix_label) {
-    case 'A':
-      {
-	if (newMass > _max_gibbsmassA)
-	  newMass = _max_gibbsmassA;
-	break;
-      }
-    case 'P':
-      {
-	if (newMass > _max_gibbsmassP)
-	  newMass = _max_gibbsmassP;
-	break;
-      }
-    }
-
-  if (newMass < 0) newMass = 0;   // due to the requirement that newMass > 0 
-
-  return newMass;
-
-}
-*/
-
-
+//-----------------------------------------------------------------
 double GibbsSampler::getMass(char the_matrix_label, double origMass,
 			     unsigned int iRow,
 			     unsigned int iCol,
@@ -2455,10 +2076,6 @@ double GibbsSampler::getMass(char the_matrix_label, double origMass,
   unsigned int iGene, iPattern, iSample, jPattern;
   double lambda;
 
-  // ---- check
-  //cout << "Inside getMass, _oper_type = " << _oper_type << ", origMass = " << origMass << endl;
-  // ------------
-
   switch(the_matrix_label)
     {
     case 'A': 
@@ -2476,8 +2093,6 @@ double GibbsSampler::getMass(char the_matrix_label, double origMass,
 	break;
       }
     }
-
-  //bool anyNonzero = false;
 
   // determine the parameters for finding the mass
   double s  = 0.;
@@ -2494,23 +2109,7 @@ double GibbsSampler::getMass(char the_matrix_label, double origMass,
 	  mock = D[iGene][iSample];
 	  for (jPattern = 0; jPattern <_nFactor; jPattern++) 
 	    {
-	      /*
-	      Aeff = currentChainMatrix[iGene][jPattern];
-	      if (jPattern == iPattern && origMass < 0.) 
-	      //if (_oper_type == 'D' && jPattern == iPattern) 
-		{
-		  // --- checking ---
-		  //if (_oper_type != 'D'){
-		  //cout << "Inside getMass (A) re-adding mass, _oper_type = " << _oper_type << endl;
-		     //}
-		  // -------------
-		  Aeff += origMass;
-		}
-	      mock -= Aeff * otherMatrix[jPattern][iSample];
-	      */
               mock -= currentChainMatrix[iGene][jPattern]* otherMatrix[jPattern][iSample];
-
-
 	    }
 	  s += _annealingTemperature * pow(otherMatrix[iPattern][iSample],2) /
 	    ( 2* pow(S[iGene][iSample],2) );
@@ -2522,28 +2121,12 @@ double GibbsSampler::getMass(char the_matrix_label, double origMass,
 
   case 'P': 
     {
-      //double Peff;
       for (iGene = 0; iGene < _nRow; iGene++) 
 	{
 	  mock = D[iGene][iSample];
 	  for (jPattern = 0; jPattern < _nFactor; jPattern++) 
 	    {
-	      /*
-	      Peff = currentChainMatrix[jPattern][iSample];
-	        if (jPattern == iPattern && origMass < 0.) 
-		  //if (_oper_type == 'D' && jPattern == iPattern) 
-		{
-		  // --- checking ---
-		  //if (_oper_type != 'D'){
-		  //cout << "Inside getMass (P) re-adding mass, _oper_type = " << _oper_type << endl;
-		     //}
-		  // -------------
-		  Peff += origMass;
-		}
-	      mock -= otherMatrix[iGene][jPattern] * Peff;
-	      */
 	      mock -= otherMatrix[iGene][jPattern] * currentChainMatrix[jPattern][iSample];
-
 	    }
 	  s += _annealingTemperature * pow(otherMatrix[iGene][iPattern],2) / 
 	    ( 2* pow(S[iGene][iSample],2) );
@@ -2617,10 +2200,6 @@ double GibbsSampler::getMass(char the_matrix_label, double origMass,
 
 }
 
-
-
-
-
 // -----------------------------------------------------------------------------
 void GibbsSampler::detail_check(char outputchi2_Filename[]){
 
@@ -2628,7 +2207,6 @@ void GibbsSampler::detail_check(char outputchi2_Filename[]){
       cout << "oper_type: " << _oper_type <<
               " ,nA: " << getTotNumAtoms('A') <<
 	      " ,nP: " << getTotNumAtoms('P') << 
-	//" ,chi2 = " << chi2 << 
               " ,_sysChi2 = " << _sysChi2 << endl;
 
 

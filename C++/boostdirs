@@ -1,2 +1,2 @@
-boost_include=${HOME}/boost/boost_1_54_0
-boost_lib=${HOME}/boost/boost_1_54_0/stage/lib
+boost_include=/Users/ochsm/boost/boost_1_55_0
+boost_lib=/Users/ochsm/boost/boost_1_55_0/stage/lib

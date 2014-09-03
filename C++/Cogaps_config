@@ -1,11 +1,14 @@
 [common]
-nFactor=7
-datafile=GIST2.txt
-variancefile=GIST2Unc.txt 
-simulation_id=trial4
-nEquil = 2000
-nSample = 2000
-Q_output_atomic = true
+nFactor=2
+datafile=Data2.txt
+variancefile=Noise2.txt 
+simulation_id=gistsim
+nEquil = 1000
+nSample = 1000
+Q_output_atomic = false
+runCogapsMap = true
+fixedmatrix = P
+fixedpatternsfile = PfixedPat2.txt
 
 [A]
 alphaA=0.01

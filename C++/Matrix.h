@@ -24,9 +24,6 @@ class Matrix
   double _alpha;
   double _lambda;
   // ---- added to bridge to Atomic Class ----------
-  //bool _isAMatrix;
-  //bool _isPMatrix;
-  // ------------------------------------------------
   double ** _Matrix;
 
  public:
@@ -34,7 +31,9 @@ class Matrix
 
   Matrix(unsigned int row_size,unsigned int col_size, char the_matrix_label, 
                   double the_matrix_alpha);
-
+				  
+  Matrix(std::vector<std::vector<double> > &vv, char the_matrix_label);
+  
   Matrix(const char input_file_name[],char the_matrix_label);
  
   ~Matrix();
@@ -45,8 +44,20 @@ class Matrix
 	           char the_matrix_label, double the_matrix_alpha);
 
   void matrix_init();
+  
+  void setRow(vector <double> &newRow, int RowNum);
+  
+  void setCol(vector <double> &newCol, int ColNum);
+  
+  void setRow(vector <double> const &theRow, int RowNum);
+  
+  void setCol(vector <double> const &theCol, int ColNum);
 
   double ** get_matrix() const;
+  
+  void get_Row(int rowNum, vector <double> &theRow) const;
+  
+  void get_Col(int colNum, vector <double> &theCol) const;
 
   unsigned int get_nRow() const;
 

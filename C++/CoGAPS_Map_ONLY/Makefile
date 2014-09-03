@@ -4,8 +4,8 @@ include ./boostdirs
 
 #all: $(name)
 	
-cogaps: cogaps.cpp GibbsSamplerMap.o GibbsSampler.o GAPSNorm.o Matrix.o AtomicSupport.o sub_func.o randgen.o
-	g++ -I $(boost_include) -o cogaps cogaps.cpp GibbsSamplerMap.o GibbsSampler.o GAPSNorm.o Matrix.o AtomicSupport.o sub_func.o randgen.o -L$(boost_lib) -lboost_program_options
+cogapsmap: cogapsmap.cpp GibbsSamplerMap.o GibbsSampler.o GAPSNorm.o Matrix.o AtomicSupport.o sub_func.o randgen.o
+	g++ -I $(boost_include) -o cogapsmap cogapsmap.cpp GibbsSamplerMap.o GibbsSampler.o GAPSNorm.o Matrix.o AtomicSupport.o sub_func.o randgen.o -L$(boost_lib) -lboost_program_options
 
 GibbsSamplerMap.o: GibbsSamplerMap.cpp GibbsSamplerMap.h GibbsSampler.o
 	g++ -c -I $(boost_include) GibbsSamplerMap.cpp GibbsSamplerMap.h GibbsSampler.o -L$(boost_lib)

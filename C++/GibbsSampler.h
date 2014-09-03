@@ -66,8 +66,6 @@ class GibbsSampler
   vector<unsigned int> _Col_changed;
   vector<double> _mass_changed;
   vector<boost::tuple<unsigned int, unsigned int, double> > _matrixElemChange;
-  // vector<boost::tuple<unsigned int, unsigned int, double> > _ElemChange;
-
 
   map<unsigned long long, double> _new_atomicProposal;
   unsigned int _new_nChange_atomicProposal;
@@ -101,7 +99,17 @@ class GibbsSampler
 	       char label_A,char label_P,char label_D,char label_S,
 	       const string & datafile, const string & variancefile,
                const string & simulation_id);
-
+			   
+  GibbsSampler(unsigned long nEquil, unsigned long nSample, unsigned int nFactor, 
+	       double alphaA, double alphaP, double nMaxA, double nMaxP,
+	       unsigned long nIterA, unsigned long nIterP, 
+	       double max_gibbsmass_paraA, double max_gibbsmass_paraP, 
+	       double lambdaA_scale_factor, double lambdaP_scale_factor, 
+               unsigned long atomicSize,
+	       char label_A,char label_P,char label_D,char label_S,
+	       vector<vector<double> > &DVector, vector<vector<double> > &SVector,
+               const string & simulation_id);
+			   
   ~GibbsSampler(){};
 
 
@@ -150,6 +158,12 @@ class GibbsSampler
 
   void cal_delloglikelihood_example();
 
+  /**
+    * @short Compute the change in likelihood, DeltaLL, by first getting the proposal from
+    *  the atomic space, then it invokes the corresponding methods in GAPSNorm 
+    *  according to the proposal size.
+	* @return the change
+	*/
   double computeDeltaLL(char the_matrix_label,
 			double const * const * D,
 			double const * const * S,
@@ -170,16 +184,46 @@ class GibbsSampler
   // *************** METHODS FOR MAKING PROPOSAL *********************************
   void update_example(char atomic_domain_label);
 
+  /** 
+    * @short Construct a "newMatrix" whose mass is given by
+    *  newMatrix = proposed changes mapped from corresponding atomic space 
+	* @return the matrix as a vector of vectors
+	*/
   vector<vector<double> > atomicProposal2Matrix(char atomic_domain_label,
   			     double const * const * origMatrix); 
- 
+				 
+  /** 
+    * @short Construct a "FullnewMatrix" whose mass is given by
+    *  newMatrix = origMatrix + proposed changes from corresponding atomic space 
+	* @return the new matrix
+	*/
   vector<vector<double> > atomicProposal2FullMatrix(char atomic_domain_label,
 						    double const * const * origMatrix);
 
+  /**
+    * @short Extract information of the proposal made in the atomic space. 
+    *  Assuming an _atomicProposal, this method instantiates the 
+    *  corresponding member variables for _matrixElemChange. In the current version, 
+    *  we store the new proposal (in matrix space) in two different class variables
+    *  of GibbsSampler:
+    *  1. vector<unsigned int> _Row_changed; vector<unsigned int> _Col_changed;
+    *     vector<double> _mass_changed;
+    *  2. _matrixElemChange (this is a boost::tuple)
+    */
   void extract_atomicProposal(char the_matrix_label);
-
+  
+  /**
+    * @short Extract from _new_atomicProposal
+    *  The code is exactly the same as extract_atomicProposal, only using the 
+    *  _new-quantities for the new proposal.
+    */
   void extract_new_atomicProposal(char the_matrix_label);
-
+  
+  /** @short make proposal and update for the matrices
+    *  It output "newMatrix", which is the final product of all the steps like 
+    *  birth, death, move, or exchange. One of these four methods is chosen 
+    *  based on the oper_type extracted from AtomicSupport using get_oper_type. 
+    */	
   void update(char the_matrix_label);
 
   void init_sysChi2();
@@ -190,13 +234,34 @@ class GibbsSampler
 
   void get_oper_type(char the_matrix_label);
 
-  bool birth_death(char the_matrix_label, 	
+  // Formerly together as birth_death and move_exchange,
+  // these methods have been separated in this version.  
+  // All of these methods follow a similar pattern:
+  /** @short instantiate the matrix element change to 
+    *  be made, if it can be. 
+	* @return true if the matrix needs changing, false
+	*  if not
+	*/ 
+    
+  bool death(char the_matrix_label, 	
 				      double const * const * D,
 				      double const * const * S,
 				      double ** AOrig,
-				      double ** POrig); 
+				      double ** POrig);
+					  
+  bool birth(char the_matrix_label, 	
+				      double const * const * D,
+				      double const * const * S,
+				      double ** AOrig,
+				      double ** POrig);
+  
+  bool move(char the_matrix_label, 	
+				      double const * const * D,
+				      double const * const * S,
+				      double ** AOrig,
+				      double ** POrig);
 
-  bool move_exchange(char the_matrix_label,
+  bool exchange(char the_matrix_label,
 					double const * const * D,
 					double const * const * S,
 					double ** AOrig,
@@ -208,31 +273,55 @@ class GibbsSampler
 
   double get_AnnealingTemperature();
 
+  /** 
+    * @short Calculate the _new annealingTemperature as a function of iteration step _iter.
+    * (Note: the annealingTemperature here is really the inverted temperature!)
+	*/
   void set_AnnealingTemperature(); 
 
   void check_atomic_matrix_consistency(char the_matrix_label);
 
+  /**
+    * @short Form the matrices _Amean, _Asd, _Pmean, _Psd. They are temporary 
+    *  matrices to be modified in compute_statistics() to calculate the means and the variances
+    *  of individual matrix entries. Note that here we have cumulated to each matrix element all its
+    *  realizations in time as:
+    *  _Amean_{ij} = \sum_{t} A_{ij}*k_{j} 
+    *  _Asd_{ij} = \sum_{t}  (A_{ij}*k_{j} )^2
+    *  _Pmean_{ij} = \sum_{t} P_{ij}/k_{i} 
+    *  _Psd_{ij} = \sum_{t}  (P_{ij}/k_{i} )^2
+	*/
   void compute_statistics_prepare_matrices(unsigned long statindx);
 
+  /** @short Use the matrices prepared in compute_statistics_prepare_matrices()
+    * to compute the means and variances of individual elements in A and P.
+	*/
   void compute_statistics(char outputFilename[],
                           char outputAmean_Filename[],char outputAsd_Filename[],
                           char outputPmean_Filename[],char outputPsd_Filename[],
-			  char outputAPmean_Filename[],
+			              char outputAPmean_Filename[],
                           unsigned int Nstat);
-
-
-
+						  
+  void compute_statistics(unsigned int Nstat,
+						  vector< vector <double> > &AMeanVect,
+						  vector< vector <double> > &AStdVect,
+						  vector< vector <double> > &PMeanVect,
+						  vector< vector <double> > &PStdVect
+						  );
+						  
   // --------------------------------------------------------------------------- 
-  // Adapt directly from old codes:
-
-  bool performUpdate(char the_matrix_label, double origMass, 
-		     unsigned int iRow, unsigned int iCol,
-		     double const * const * A, double const * const * P);
-
-  bool performUpdateKill(char the_matrix_label, unsigned int iRow, unsigned int iCol,
+  /** 
+   * @short check whether or not we can use Gibbs Sampling by looking at the other
+      matrix. History: formerly two methods, performUpdate and performUpdateKill,
+	  now consolidated to one method called checkOtherMatrix.
+   */		   
+  bool checkOtherMatrix(char the_matrix_label, unsigned int iRow, unsigned int iCol,
 		       double const * const * otherMatrix);
 
-
+  /** 
+   * @short Give the atom a mass based on Gibbs Sampling, if it can be used
+   * @return the new mass of the atom
+   */		  
   double getMass(char the_matrix_label, double origMass,
 		 unsigned int iRow,
 		 unsigned int iCol,

@@ -1,8 +1,8 @@
 // cogaps.cpp
 
 // =============================================================================
-// This is the main code for Cogaps. (7th Sep, 2013)
-// This code also incorporates CogapsMAP (for fixed patterns) (7th Aug 2014)
+// This is the main code for CogapsMAP. (7th Sep, 2013)
+// This code ONLY incorporates CogapsMAP (for fixed patterns) (7th Aug 2014)
 // =============================================================================
 
 
@@ -158,184 +158,6 @@ int main(int ac, char* av[]){
 
   outputFile.close();
 
-// If no mappings, run cogaps normally:
-if (!runCogapsMap){
-
-  // ---------------------------------------------------------------------------
-  // Initialize the GibbsSampler.
-
-  GibbsSampler GibbsSamp(nEquil,nSample,nFactor,   // construct GibbsSampler and 
-                         alphaA,alphaP,nMaxA,nMaxP,// Read in D and S matrices
-                         nIterA,nIterP,
-			 max_gibbsmass_paraA, max_gibbsmass_paraP, 
-			 lambdaA_scale_factor, lambdaP_scale_factor,
-                         atomicSize,
-                         label_A,label_P,label_D,label_S,
-			 datafile,variancefile,simulation_id);
-
-  // ---------------------------------------------------------------------------
-  // Based on the information of D, construct and initialize for A and P both 
-  // the matrices and atomic spaces.
-
-  GibbsSamp.init_AMatrix_and_PMatrix(); // initialize A and P matrices
-  GibbsSamp.init_AAtomicdomain_and_PAtomicdomain(); // intialize atomic spaces
-                                                    // A and P
-  GibbsSamp.init_sysChi2(); // initialize the system chi2 value
-
-  // ===========================================================================
-  // Part 2) Equilibration:
-  // In this section, we let the system eqilibrate with nEquil outer loop 
-  // iterations. Within each outer loop iteration, A is iterated nIterA times 
-  // and P is iterated nIterP times. After equilibration, we update nIterA and 
-  // nIterP according to the expected number of atoms in the atomic spaces 
-  // of A and P respectively.
-  // ===========================================================================
-  
-      // --------- temp for initializing output to chi2.txt
-      char outputchi2_Filename[80];
-      strcpy(outputchi2_Filename,simulation_id.c_str());
-      strcat(outputchi2_Filename,"_chi2.txt");
-      ofstream outputchi2_File;
-      outputchi2_File.open(outputchi2_Filename,ios::out);
-      outputchi2_File << "chi2" << endl;
-      outputchi2_File.close();
-      // --------------
-      
-
-
-  double chi2;
-
-
-  for (unsigned long ext_iter=1; ext_iter <= nEquil; ++ext_iter){
-    GibbsSamp.set_iter(ext_iter);
-    GibbsSamp.set_AnnealingTemperature();
-
-
-    for (unsigned long iterA=1; iterA <= nIterA; ++iterA){
-      GibbsSamp.update('A');
-    }
-    GibbsSamp.check_atomic_matrix_consistency('A');
-
-    for (unsigned long iterP=1; iterP <= nIterP; ++iterP){
-      GibbsSamp.update('P');
-    }
-	
-    GibbsSamp.check_atomic_matrix_consistency('P');
-
-    // ----------- output computing info ---------
-    if ( ext_iter % 20 == 0){
-      GibbsSamp.output_computing_info(outputFilename,ext_iter,nEquil,0,nSample);
-      cout << "Equil: " << ext_iter << " of " << nEquil << 
-              " ,nA: " << GibbsSamp.getTotNumAtoms('A') <<
-	      " ,nP: " << GibbsSamp.getTotNumAtoms('P') << 
-              " ,System Chi2 = " << GibbsSamp.get_sysChi2() << endl;
-    }
-
-    // -------------------------------------------
-    // re-calculate nIterA and nIterP to the expected number of atoms 
-    nIterA = (unsigned long) randgen('P',max((double) GibbsSamp.getTotNumAtoms('A'),10.));
-    nIterP = (unsigned long) randgen('P',max((double) GibbsSamp.getTotNumAtoms('P'),10.));
-    // --------------------------------------------
-
-  }  // end of for-block for equilibration
- 
-
-
-  // ===========================================================================
-  // Part 3) Sampling:
-  // After the system equilibriates in Part 2, we sample the systems with an 
-  // outer loop of nSample iterations. Within each outer loop iteration, A is 
-  // iterated nIterA times and P is iterated nIterP times. After sampling, 
-  // we update nIterA and nIterP according to the expected number of atoms in 
-  // the atomic spaces of A and P respectively.
-  // ===========================================================================
-  
-
-
-  unsigned int statindx = 0;
-  for (unsigned long ext_iter=1; ext_iter <= nSample; ++ext_iter){
-    for (unsigned long iterA=1; iterA <= nIterA; ++iterA){
-      GibbsSamp.update('A');
-    }
-    GibbsSamp.check_atomic_matrix_consistency('A');
-
-    for (unsigned long iterP=1; iterP <= nIterP; ++iterP){ 
-      GibbsSamp.update('P');
-    }
-    GibbsSamp.check_atomic_matrix_consistency('P');
-
-    if (Q_output_atomic == true){
-       GibbsSamp.output_atomicdomain('A',ext_iter);
-       GibbsSamp.output_atomicdomain('P',ext_iter);
-    }
-
-     statindx += 1;
-     GibbsSamp.compute_statistics_prepare_matrices(statindx);
-
-    // ----------- output computing info ---------
-    if ( ext_iter % 20 == 0){
-	
-      GibbsSamp.output_computing_info(outputFilename,nEquil,nEquil,ext_iter,nSample);
-      cout << "Samp: " << ext_iter << " of " << nSample << 
-              " ,nA: " << GibbsSamp.getTotNumAtoms('A') <<
-	      " ,nP: " << GibbsSamp.getTotNumAtoms('P') << 
-              " , System Chi2 = " << GibbsSamp.get_sysChi2() << endl;
-
-      if (ext_iter == nSample){
-         chi2 = 2.*GibbsSamp.cal_logLikelihood();
-	 cout << " *** Check value of final chi2: " << chi2 << " **** " << endl; 
-      }
-
-
-    }
-
-    // -------------------------------------------
-    // re-calculate nIterA and nIterP to the expected number of atoms 
-    nIterA = (unsigned long) randgen('P',max((double) GibbsSamp.getTotNumAtoms('A'),10.));
-    nIterP = (unsigned long) randgen('P',max((double) GibbsSamp.getTotNumAtoms('P'),10.));
-    // --------------------------------------------
-
-  }  // end of for-block for Sampling
-
- 
-
-  // ===========================================================================
-  // Part 4) Calculate statistics:
-  // In this final section, we calculate all statistics pertaining to the final
-  // sample and check the results.
-  // ===========================================================================
-
-  char outputAmean_Filename[80];
-  strcpy(outputAmean_Filename,simulation_id.c_str());
-  strcat(outputAmean_Filename,"_Amean.txt");
-
-  char outputAsd_Filename[80];
-  strcpy(outputAsd_Filename,simulation_id.c_str());
-  strcat(outputAsd_Filename,"_Asd.txt");
-
-  char outputPmean_Filename[80];
-  strcpy(outputPmean_Filename,simulation_id.c_str());
-  strcat(outputPmean_Filename,"_Pmean.txt");
-
-  char outputPsd_Filename[80];
-  strcpy(outputPsd_Filename,simulation_id.c_str());
-  strcat(outputPsd_Filename,"_Psd.txt");
-
-  char outputAPmean_Filename[80];
-  strcpy(outputAPmean_Filename,simulation_id.c_str());
-  strcat(outputAPmean_Filename,"_APmean.txt");
-
-
-
-  GibbsSamp.compute_statistics(outputFilename,
-                               outputAmean_Filename,outputAsd_Filename,
-			       outputPmean_Filename,outputPsd_Filename,
-			       outputAPmean_Filename,
-                               statindx);          // compute statistics like mean and s.d.
-  
-  return 0;
-  }
-
 // Running Cogaps with fixed mappings and GibbsSamplerMap class:
 
 // Unique to Fixed Map Cogaps 
@@ -375,7 +197,7 @@ if (!runCogapsMap){
                                                       // A and P
   GibbsSampMap.initialize_atomic_domain_map(); // keep the domains in line with matrix
   GibbsSampMap.init_sysChi2(); // initialize the system chi2 value
-  // GibbsSampMap.print_A_and_P(); // for debugging
+  GibbsSampMap.print_A_and_P(); // for debugging
   GibbsSampMap.check_atomic_matrix_consistency('A');
   GibbsSampMap.check_atomic_matrix_consistency('P');
   // ===========================================================================
@@ -498,7 +320,7 @@ if (!runCogapsMap){
   // In this final section, we calculate all statistics pertaining to the final
   // sample and check the results.
   // ===========================================================================
-  // GibbsSampMap.print_A_and_P();
+   GibbsSampMap.print_A_and_P();
 
   char outputAmean_Filename[80];
   strcpy(outputAmean_Filename,simulation_id.c_str());

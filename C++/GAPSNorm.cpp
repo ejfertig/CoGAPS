@@ -1,11 +1,11 @@
 
-// CoGAPS C++ Verison
+// CoGAPS C++ Version
 // 
 // Functions to compute matrix multiplication and
 // Likelihood function
 //
 // History: v 1.0  Jan 16, 2014
-//
+//          Updated to include mapped methods August 7, 2014
 
 
 #include <iostream>
@@ -381,6 +381,331 @@ namespace gaps
     return delloglikelihood;
     
 } // end of calcDeltaGen
+
+// ---------------------------------------------------------------------------
+  // Calcuation of the change in the log-likelihood when matrix A (or P) is augmented 
+  // with a change that occurs in a fixed pattern. This means that an entire 
+  // column/row of A or P is changed. 
+  // Because changing an entire column of A or row of P completely changes the matrix 
+  // A*P, we recalculate A*P completely 
+
+    double GAPSNorm::calcDeltaLLMap(char matrix_label,
+				double const * const * D, double const * const * S, 
+				double const * const * A, double const * const * P, 
+				vector <double> &newPat, unsigned int chPat, unsigned int nRow, 
+				unsigned int nCol, unsigned int nFactor) {
+
+    double delloglikelihood = 0;
+
+    // ---- Form M = D - A*P -----
+    double M[nRow][nCol];
+    for (unsigned int iRow=0; iRow < nRow; ++iRow){
+        for (unsigned int iCol=0; iCol < nCol; ++ iCol){
+            M[iRow][iCol] = D[iRow][iCol];
+            for (unsigned int iPattern=0; iPattern < nFactor; ++iPattern){
+                M[iRow][iCol] -= A[iRow][iPattern]*P[iPattern][iCol];
+            }
+        }
+    }
+    
+    switch(matrix_label){
+        case 'A':{
+		
+            // ---- Construct delA -----
+            double delA[nRow][nFactor];
+            for (unsigned int m=0; m < nRow; m++){
+                for (unsigned int n=0; n<nFactor ; n++){
+                    delA[m][n] = 0. ;
+                } 
+            }
+
+			// The change here is along one column, chPat:
+			// Remember that the passed in vector represents
+			// the actual new row, not the change, hence the 
+			// adjustment. 
+            for (unsigned int iRow=0; iRow < nRow; ++iRow){
+                delA[iRow][chPat] += (newPat.at(iRow) - A[iRow][chPat]);
+
+            } 
+            // ----- Compute delA*P ----
+            double delAP[nRow][nCol];
+            for (unsigned int iRow=0; iRow < nRow; ++iRow){
+                for (unsigned int iCol=0; iCol < nCol; ++iCol){
+		           delAP[iRow][iCol] = 0.;
+                    for (unsigned int iPattern=0; iPattern < nFactor; ++iPattern){
+                        delAP[iRow][iCol] += delA[iRow][iPattern]*P[iPattern][iCol];
+                    }
+                }
+            }
+            // ------ Compute delloglikelihood -------
+            for (unsigned int iRow=0; iRow < nRow; ++iRow){
+                for (unsigned int iCol=0; iCol < nCol; ++iCol){
+                    delloglikelihood += (2.*M[iRow][iCol]*delAP[iRow][iCol]-pow(delAP[iRow][iCol],2)) 
+                    / 2. / pow(S[iRow][iCol],2);
+                }
+            }
+            break;
+        } // end of the A sub-block 
+            
+        case 'P':{
+		
+            // ---- Construct delP -----
+            double delP[nFactor][nCol];
+            for (unsigned int m=0; m < nFactor; m++){
+                for (unsigned int n=0; n<nCol ; n++){
+                    delP[m][n] = 0. ;
+                } 
+            }
+            // The change here is along one row, chPat:
+			// Remember that the passed in vector represents
+			// the actual new row, not the change, hence the 
+			// adjustment. 
+            for (unsigned int iCol=0; iCol < nCol; ++iCol){
+                delP[chPat][iCol] += (newPat.at(iCol) - P[chPat][iCol]);
+
+            } 
+            // ----- Compute A*delP ----
+            double AdelP[nRow][nCol];
+            for (unsigned int iRow=0; iRow < nRow; ++iRow){
+                for (unsigned int iCol=0; iCol < nCol; ++iCol){
+		          AdelP[iRow][iCol]=0.;
+                    for (unsigned int iPattern=0; iPattern < nFactor; ++iPattern){
+                        AdelP[iRow][iCol] += A[iRow][iPattern]*delP[iPattern][iCol];
+                    }
+                }
+            }
+            // ------ Compute delloglikelihood -------
+            for (unsigned int iRow=0; iRow < nRow; ++iRow){
+                for (unsigned int iCol=0; iCol < nCol; ++iCol){
+                    delloglikelihood += (2.*M[iRow][iCol]*AdelP[iRow][iCol]-pow(AdelP[iRow][iCol],2)) 
+                    / 2. / pow(S[iRow][iCol],2);
+                }
+            }
+            break;
+        } // end of the P sub-block 
+            
+    } // end of switch
+    
+    return delloglikelihood;
+    
+} // end of calcDeltaLLGenMap
+
+   // For move exchange / multiple pattern changes
+    double GAPSNorm::calcDeltaLL2Map(char matrix_label,
+				double const * const * D, double const * const * S, 
+				double const * const * A, double const * const * P, 
+				vector <double> &newPat1, unsigned int chPat1,
+				vector <double> &newPat2, unsigned int chPat2, unsigned int nRow, 
+				unsigned int nCol, unsigned int nFactor){
+  
+    double delloglikelihood = 0;
+
+    // ---- Form M = D - A*P -----
+    double M[nRow][nCol];
+    for (unsigned int iRow=0; iRow < nRow; ++iRow){
+        for (unsigned int iCol=0; iCol < nCol; ++ iCol){
+            M[iRow][iCol] = D[iRow][iCol];
+            for (unsigned int iPattern=0; iPattern < nFactor; ++iPattern){
+                M[iRow][iCol] -= A[iRow][iPattern]*P[iPattern][iCol];
+            }
+        }
+    }
+    
+    switch(matrix_label){
+        case 'A':{
+		
+            // ---- Construct delA -----
+            double delA[nRow][nFactor];
+            for (unsigned int m=0; m < nRow; m++){
+                for (unsigned int n=0; n<nFactor ; n++){
+                    delA[m][n] = 0. ;
+                } 
+            }
+
+			// The change here is along 2 columns, chPat1, and chPat2:
+			// Remember that the passed in vector represents
+			// the actual new row, not the change, hence the 
+			// adjustment. 
+            for (unsigned int iRow=0; iRow < nRow; ++iRow){
+                delA[iRow][chPat1] += (newPat1.at(iRow) - A[iRow][chPat1]);
+                delA[iRow][chPat2] += (newPat2.at(iRow) - A[iRow][chPat2]);
+            } 
+            // ----- Compute delA*P ----
+            double delAP[nRow][nCol];
+            for (unsigned int iRow=0; iRow < nRow; ++iRow){
+                for (unsigned int iCol=0; iCol < nCol; ++iCol){
+		           delAP[iRow][iCol] = 0.;
+                    for (unsigned int iPattern=0; iPattern < nFactor; ++iPattern){
+                        delAP[iRow][iCol] += delA[iRow][iPattern]*P[iPattern][iCol];
+                    }
+                }
+            }
+            // ------ Compute delloglikelihood -------
+            for (unsigned int iRow=0; iRow < nRow; ++iRow){
+                for (unsigned int iCol=0; iCol < nCol; ++iCol){
+                    delloglikelihood += (2.*M[iRow][iCol]*delAP[iRow][iCol]-pow(delAP[iRow][iCol],2)) 
+                    / 2. / pow(S[iRow][iCol],2);
+                }
+            }
+            break;
+        } // end of the A sub-block 
+            
+        case 'P':{
+		
+            // ---- Construct delP -----
+            double delP[nFactor][nCol];
+            for (unsigned int m=0; m < nFactor; m++){
+                for (unsigned int n=0; n<nCol ; n++){
+                    delP[m][n] = 0. ;
+                } 
+            }
+            // The change here is along one row, chPat:
+			// Remember that the passed in vector represents
+			// the actual new row, not the change, hence the 
+			// adjustment. 
+            for (unsigned int iCol=0; iCol < nCol; ++iCol){
+                delP[chPat1][iCol] += (newPat1.at(iCol) - P[chPat1][iCol]);
+                delP[chPat2][iCol] += (newPat2.at(iCol) - P[chPat2][iCol]);
+            } 
+            // ----- Compute A*delP ----
+            double AdelP[nRow][nCol];
+            for (unsigned int iRow=0; iRow < nRow; ++iRow){
+                for (unsigned int iCol=0; iCol < nCol; ++iCol){
+		          AdelP[iRow][iCol]=0.;
+                    for (unsigned int iPattern=0; iPattern < nFactor; ++iPattern){
+                        AdelP[iRow][iCol] += A[iRow][iPattern]*delP[iPattern][iCol];
+                    }
+                }
+            }
+            // ------ Compute delloglikelihood -------
+            for (unsigned int iRow=0; iRow < nRow; ++iRow){
+                for (unsigned int iCol=0; iCol < nCol; ++iCol){
+                    delloglikelihood += (2.*M[iRow][iCol]*AdelP[iRow][iCol]-pow(AdelP[iRow][iCol],2)) 
+                    / 2. / pow(S[iRow][iCol],2);
+                }
+            }
+            break;
+        } // end of the P sub-block 
+            
+    } // end of switch
+    
+    return delloglikelihood;
+    
+} // end of calcDeltaLLGenMap		
+
+
+  // ---------------------------------------------------------------------------
+  // Calcuation of the parameters s and su for exchange action 
+  // will be used GibbsSampler to determine whether or not Gibbs exchange
+  // action is possible. If it is, s and su are adjusted for annealingtemp
+  // and used to determine distribution on alpha. For full proof, see Fertig (2009)
+
+	pair<double, double> GAPSNorm:: calcAlphaParameters(char the_matrix_label, unsigned int nRow, unsigned int nCol, unsigned int nFactor,
+						    double const * const * D, double const * const * S, double ** AOrig,
+						    double ** POrig, unsigned int iGene1, unsigned int iPattern1, 
+                            unsigned int iGene2, unsigned int iPattern2, unsigned int iSample1, 
+							unsigned int iSample2){
+
+	  double s = 0.0;
+	  double su = 0.0;
+	  double mock = 0.0;
+	  double mock1 = 0.0;
+	  double mock2 = 0.0;
+	  double mean = 0; 
+	  double sd = 0;
+	  double gibbsMass1, gibbsMass2;
+
+	   switch(the_matrix_label){
+		 case 'A':{
+		  // ---------- EXCHANGE ACTION WITH A ----------------------------
+		  
+		  double Aeff;
+		  // compute the distribution parameters
+		  if (iGene1 == iGene2) {
+			for (int jSample = 0; jSample < nCol; jSample++) {
+			  // Calculate the mock term
+			  mock = D[iGene1][jSample];
+			  for (int jPattern = 0; jPattern < nFactor; jPattern++) {
+			Aeff = AOrig[iGene1][jPattern];
+			mock -= Aeff * POrig[jPattern][jSample];
+			  } // end of for-block that make changes to elements in A
+
+			  s += ( ( POrig[iPattern1][jSample]-POrig[iPattern2][jSample] ) *
+				 ( POrig[iPattern1][jSample]-POrig[iPattern2][jSample] ) ) /
+			pow(S[iGene1][jSample],2);
+			  su += mock *( POrig[iPattern1][jSample]-POrig[iPattern2][jSample] ) /
+			pow( S[iGene1][jSample],2);
+			}
+		  }  // end of case iGene1 = iGene2
+		  else  { // iGene1 != iGene2 
+			for (int jSample = 0; jSample < nCol; jSample++) {
+			  mock1 = D[iGene1][jSample];
+			  mock2 = D[iGene2][jSample]; 
+
+			  for (int jPattern = 0; jPattern < nFactor; jPattern++) {
+			Aeff = AOrig[iGene1][jPattern];
+			mock1 -= Aeff * POrig[jPattern][jSample];
+			Aeff = AOrig[iGene2][jPattern];
+			mock2 -= Aeff * POrig[jPattern][jSample];
+			  } // end of for-block for adding changes to A
+
+			  s  += pow(POrig[iPattern1][jSample] / S[iGene1][jSample],2) +
+			pow(POrig[iPattern2][jSample] / S[iGene2][jSample],2);
+			  su += mock1*POrig[iPattern1][jSample]/pow(S[iGene1][jSample],2) -
+			mock2*POrig[iPattern2][jSample]/pow(S[iGene2][jSample],2);
+			}
+		  } // end of if-block for calculating s and su for case 'A'	       
+		
+		  break;} // end of switch block for EXCHANGE ACTION with A
+		  
+		case 'P': {
+		  // ---------- EXCHANGE ACTION WITH P ----------------------------
+
+		  double Peff;
+		  // compute the distribution parameters
+		  if (iSample1 == iSample2) {
+			for (int jGene = 0; jGene < nRow; jGene++) {
+			  // Calculate the mock term
+			  mock = D[jGene][iSample1];
+			  for (int jPattern = 0; jPattern < nFactor; jPattern++) {
+			Peff = POrig[jPattern][iSample1];
+			mock -=  AOrig[jGene][jPattern]*Peff;
+			  } // end of for-block that make changes to elements in P
+
+			  s += pow( ((AOrig[jGene][iPattern1]-AOrig[jGene][iPattern2])/
+				 S[jGene][iSample1]),2);
+			  su += mock *( AOrig[jGene][iPattern1]-AOrig[jGene][iPattern2] ) /
+			pow( S[jGene][iSample1],2);
+			}
+		  }  // end of case iSample1 = iSample2
+		  else  { // iSample1 != iSample2 
+			for (int jGene = 0; jGene < nRow; jGene++) {
+			  mock1 = D[jGene][iSample1];
+			  mock2 = D[jGene][iSample2]; 
+
+			  for (int jPattern = 0; jPattern < nFactor; jPattern++) {
+			Peff = POrig[jPattern][iSample1];
+			mock1 -= AOrig[jGene][jPattern]*Peff;
+			Peff = POrig[jPattern][iSample2];
+			mock2 -= AOrig[jGene][jPattern]*Peff;
+			  } // end of for-block for adding changes to P
+
+			  s  += pow(AOrig[jGene][iPattern1] / S[jGene][iSample1],2) +
+			pow(AOrig[jGene][iPattern2] / S[jGene][iSample2],2);
+			  su += mock1*AOrig[jGene][iPattern1]/pow(S[jGene][iSample1],2) -
+			mock2*AOrig[jGene][iPattern2]/pow(S[jGene][iSample2],2);
+			}
+		  } // end of if-block for calculating s and su for case 'P'
+
+		  // end of compute distribution parameters for P	       
+		
+		  break;} // end of switch block for EXCHANGE ACTION with P
+	 
+		} // end of switch block for EXCHANGE ACTION
+		
+		return make_pair(s, su);
+
+	} // end of calcalphaparameters method
 
 
 } // correspond to namespace gaps 

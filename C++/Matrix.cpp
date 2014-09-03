@@ -1,10 +1,10 @@
 
-// CoGAPS C++ Verison
+// CoGAPS C++ Version
 // 
 // Creation of Matrix class and functions related to it
 //
 // History: v 1.0  Jan 18, 2014
-//
+//          Updated to include mapped methods August 7, 2014
 
 #include <iostream>
 #include <iomanip>
@@ -44,6 +44,23 @@ Matrix::Matrix(unsigned int row_size,unsigned int col_size,
   // initializtion of the constructed matrix
   matrix_init();
 
+}
+
+Matrix::Matrix(std::vector<std::vector<double> > &vv, char the_matrix_label)
+{	
+    _label = the_matrix_label;
+	_n_row = vv.size();
+    _n_col = vv[1].size();
+    _length = _n_row * _n_col;
+    _Matrix = new double * [_n_row];
+    for (int m=0; m < _n_row ; ++m) {
+        _Matrix[m] = new double [_n_col];
+    }
+    for (int m=0; m < _n_row ; ++m) {
+        for (int n=0; n < _n_col; ++n) {
+            _Matrix[m][n] = vv[m][n];
+        }
+    }
 }
 
 // initialize a matrix from an input file
@@ -118,11 +135,57 @@ void Matrix::matrix_init() {
     }
 }
 
+// set a row of the matrix to passed vector 
+// implemented to fix rows at a time with maps
+void Matrix::setRow(vector <double> &newRow, int RowNum){
+        for (int n=0; n<_n_col;++n) {        
+	  _Matrix[RowNum][n] = newRow.at(n); 
+        }
+    }
+	
+// set a column of the matrix to passed vector
+// implemented to fix columns at a time with maps
+void Matrix::setCol(vector <double> &newCol, int ColNum){
+        for (int n=0; n<_n_row;++n) {        
+	  _Matrix[n][ColNum] = newCol.at(n); 
+        }
+    } 
+	
+// set a row of the matrix to passed vector
+// implemented to fix rows at a time with maps
+void Matrix::setRow(vector <double> const &theRow, int RowNum){
+        for (int n=0; n<_n_col;++n) {        
+	  _Matrix[RowNum][n] = theRow.at(n); 
+        }
+    }
+	
+// set a column of the matrix to passed vector 
+// implemented to fix columns at a time with maps
+void Matrix:: setCol(vector <double> const &theCol, int ColNum){
+        for (int n=0; n<_n_row;++n) {        
+	  _Matrix[n][ColNum] = theCol.at(n); 
+        }
+    } 
+
+
 
 // these methods return the matrix or parameters
 double ** Matrix::get_matrix() const {
   return _Matrix;
 }
+
+void Matrix::get_Row(int rowNum, vector <double> &theRow) const {
+  for (int iCol = 0; iCol < _n_col; iCol++){
+   theRow.push_back(_Matrix[rowNum][iCol]);
+   }
+}
+
+void Matrix::get_Col(int colNum, vector <double> &theCol) const {
+  for (int iRow=0; iRow < _n_row; iRow++){
+   theCol.push_back(_Matrix[iRow][colNum]);
+   }
+}
+
 
 unsigned int Matrix::get_nRow() const {
   return _n_row;
@@ -204,9 +267,6 @@ void Matrix::matrix_Elem_update(vector<boost::tuple<unsigned int, unsigned int, 
   unsigned int chRow, chCol;
   double delelem;
  
-  //cout << "Inside matrix_Elem_update, we have oper_type = " << oper_type << endl;
-  //cout << "oper_type = " << oper_type << ", nChange = " << nChange << endl;
-
   for (unsigned int m=0; m < nChange; ++m) {
     chRow = the_matrixElemChange[m].get<0>();
     chCol = the_matrixElemChange[m].get<1>();
