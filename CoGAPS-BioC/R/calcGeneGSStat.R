@@ -23,8 +23,8 @@
 #'@param nullGenes - logical indicating gene adjustment
 #'@export
 
-calcGeneGSStat  <- function(Amean, Asd, GSGenes, numPerm, Pw=rep(1,ncol(Amean)), nullGenes=F) {
-	gsStat <- calcCoGAPSStat(Amean, Asd, data.frame(GSGenes), 
+calcGeneGSStat  <- function(Amean, Asd, GStoGenes, numPerm, Pw=rep(1,ncol(Amean)), nullGenes=F) {
+	gsStat <- calcCoGAPSStat(Amean, Asd, data.frame(GStoGenes), 
 							 numPerm=numPerm)
 	gsStat <- gsStat$GSUpreg
 	
@@ -38,10 +38,10 @@ calcGeneGSStat  <- function(Amean, Asd, GSGenes, numPerm, Pw=rep(1,ncol(Amean)),
   }
 		
 	if (nullGenes) {
-		ZD <- Amean[setdiff(row.names(Amean), GSGenes),] /
-     	Asd[setdiff(row.names(Amean), GSGenes),]
+		ZD <- Amean[setdiff(row.names(Amean), GStoGenes),] /
+     	Asd[setdiff(row.names(Amean), GStoGenes),]
 	} else {
-		ZD <- Amean[GSGenes,]/Asd[GSGenes,]
+		ZD <- Amean[GStoGenes,]/Asd[GStoGenes,]
 	}
 	outStats <- apply(sweep(ZD,2,gsStat,FUN="*"),1,sum) / (sum(gsStat))
 	
@@ -59,24 +59,24 @@ calcGeneGSStat  <- function(Amean, Asd, GSGenes, numPerm, Pw=rep(1,ncol(Amean)),
 }
 
 
-computeGeneGSProb <- function(Amean, Asd, GSGenes, Pw=rep(1,ncol(Amean)),
+computeGeneGSProb <- function(Amean, Asd, GStoGenes, Pw=rep(1,ncol(Amean)),
                               numPerm=500, PwNull=F) {
 	geneGSStat <- calcGeneGSStat(Amean=Amean, Asd=Asd, Pw=Pw,
-								 GSGenes=GSGenes, numPerm=numPerm)
+								 GStoGenes=GStoGenes, numPerm=numPerm)
 	
 	
 	
 	if (PwNull) {
 	  permGSStat <- calcGeneGSStat(Amean=Amean, Asd=Asd,
-								  GSGenes=GSGenes, numPerm=numPerm, Pw=Pw,
+								  GStoGenes=GStoGenes, numPerm=numPerm, Pw=Pw,
 								  nullGenes=T)
 	} else {
       permGSStat <- calcGeneGSStat(Amean=Amean, Asd=Asd,
-								  GSGenes=GSGenes, numPerm=numPerm, 
+								  GStoGenes=GStoGenes, numPerm=numPerm, 
 								  nullGenes=T)
 	}
 	
-	finalStats <- sapply(GSGenes,
+	finalStats <- sapply(GStoGenes,
 						 function(x){length(which(permGSStat > geneGSStat[x])) / length(permGSStat)})
 	
 	return(finalStats)

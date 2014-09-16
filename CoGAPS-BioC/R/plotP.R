@@ -16,7 +16,6 @@
 
 plotP<-function(PMean_Mat, P_SD)  {
 
-    require(plotrix)
 
     Nfactor=dim(PMean_Mat)[1]
     Nobs=dim(PMean_Mat)[2]
@@ -28,7 +27,7 @@ plotP<-function(PMean_Mat, P_SD)  {
         main="Patterns from P Matrix",ylab="Amplitude",
         cex.axis=0.8,cex.main=1.4,cex.lab=1.3) 
     plotCI(x=RowP, y= as.vector(t(PMean_Mat)), 
-        uiw=c(t(matrix(P_SD,nrow=Nfactor,nc=Nobs,byrow=FALSE))), 
+        uiw=c(t(matrix(P_SD,nrow=Nfactor,ncol=Nobs,byrow=FALSE))), 
         add=T,col = rep(rainbow(ncol(t(PMean_Mat))),
         each=nrow(t(PMean_Mat)))) 
     par(mar=c(0, 0, 0, 0))

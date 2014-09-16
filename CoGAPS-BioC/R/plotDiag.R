@@ -17,15 +17,13 @@ PMean <- gapsRes$Pmean
 ASD <- gapsRes$Asd
 PSD <- gapsRes$Psd
 ChiSq <- gapsRes$chiSqValues
-AtomssAEquil <- gapsRes$atomsAEquil
-AtomssASamp <- gapsRes$atomsASamp
-AtomssPEquil <- gapsRes$atomsPEquil
-AtomssPSamp <- gapsRes$atomsPSamp
+AtomsAEquil <- gapsRes$atomsAEquil
+AtomsASamp <- gapsRes$atomsASamp
+AtomsPEquil <- gapsRes$atomsPEquil
+AtomsPSamp <- gapsRes$atomsPSamp
 
 
 
-require(gplots)
-require(RColorBrewer)
 par(ask=TRUE)
 
 

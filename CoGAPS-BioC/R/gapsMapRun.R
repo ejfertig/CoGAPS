@@ -34,10 +34,14 @@
 #'@param  nSample number of iterations for sampling
 #'@param  nOutR how often to print status into R by iterations
 #'@param  output_atomic whether to write atom files (large)
-#'@param  alphaA, alphaP sparsity parameters for A and P domains
-#'@param  max_gibbmass_paraA(P) limit truncated normal to max size
-#'@param  nMaxA, nMaxP PRESENTLY UNUSED, future = limit number of atoms
-#'@param  lambdaA(P)_scale_factor lambda factor in penalized likelihood
+#'@param  alphaA sparsity parameter for A domain 
+#'@param  alphaP sparsity parameter for P domain 
+#'@param  max_gibbmass_paraA limit truncated normal to max size in A
+#'@param  max_gibbmass_paraP limit truncated normal to max size in P
+#'@param  nMaxA PRESENTLY UNUSED, future = limit number of atoms in A
+#'@param  nMaxP PRESENTLY UNUSED, future = limit number of atoms in P
+#'@param  lambdaA_scale_factor lambda factor in penalized likelihood in A
+#'@param  lambdaP_scale_factor lambda factor in penalized likelihood in P
 #'@export
 
 gapsMapRun <- function(D, S, FP, nFactor = "7", simulation_id = "simulation", nEquil = "1000", nSample = "1000", nOutR = 1000, output_atomic = "FALSE", alphaA = "0.01",  nMaxA = "100000", max_gibbmass_paraA = "100.0", lambdaA_scale_factor = "1.0", alphaP = "0.01", nMaxP = "100000", max_gibbmass_paraP = "100.0", lambdaP_scale_factor = "1.0")

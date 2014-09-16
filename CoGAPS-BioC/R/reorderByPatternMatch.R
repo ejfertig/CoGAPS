@@ -11,7 +11,7 @@
 #' heatmap and line plot respectively
 #'
 #'@param P matrix to be matched
-#'@param matchto matrix to match P to
+#'@param matchTo matrix to match P to
 #'@export
 
 reorderByPatternMatch <- function(P, matchTo) {

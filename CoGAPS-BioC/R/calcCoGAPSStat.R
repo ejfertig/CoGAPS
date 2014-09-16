@@ -6,8 +6,7 @@
 #         GStoGenes - data.frame or list with gene sets
 #         numPerm - number of permutations for null
 
-# Output: environment with gene set statistics 
-#       NOTE: should make into list object, env historical
+# Output: list with gene set statistics 
 
 #'\code{calcCoGAPSStat} calculates the gene set statistics for each
 #'column of A using a Z-score from the elements of the A matrix,
@@ -55,7 +54,7 @@ calcCoGAPSStat <- function (Amean, Asd, GStoGenes, numPerm=500) {
   statsUp   <- matrix(ncol = numGS, nrow = numPatt)
   statsDown <- matrix(ncol = numGS, nrow = numPatt)
   actEst    <- matrix(ncol = numGS, nrow = numPatt)
-  results   <- new.env()
+  results   <- list() 
   zPerm     <- matrix(ncol=numPerm,nrow=numPatt)
 
   # do permutation test
@@ -74,7 +73,7 @@ calcCoGAPSStat <- function (Amean, Asd, GStoGenes, numPerm=500) {
           zPerm[p,j] <- mean(temp2)
         }
       }
-      assign(label,zPerm,envir=results)
+      results[[label]] <- zPerm
     }
   }
 
@@ -118,9 +117,9 @@ calcCoGAPSStat <- function (Amean, Asd, GStoGenes, numPerm=500) {
   rownames(statsDown) <- colnames(zMatrix)
   rownames(actEst) <- colnames(zMatrix)
 
-  assign('GSUpreg', statsUp, envir=results)
-  assign('GSDownreg', statsDown, envir=results)
-  assign('GSActEst', actEst, envir=results)
+  results[['GSUpreg']] <- statsUp
+  results[['GSDownreg']] <- statsDown
+  results[['GSActEst']] <- actEst 
   
   return(results)
 }

@@ -24,6 +24,8 @@
 #'@param plotPTS whether to plot points on lines
 #'@param pointCol color of points
 #'@param lineCol color of line
+#'@param add logical specifying if bars should be added to an already existing plot; defaults to `FALSE'.
+#'@param ... arguments to be passed to/from other methods.  For the default method these can include further arguments (such as `axes', `asp' and `main') and graphical parameters (see `par') which are passed to `plot.window()', `title()' and `axis'.
 #'@export
 
 plotSmoothPatterns <- function(P, x=NULL, breaks=NULL, breakStyle=T, orderP=!all(is.null(x)), plotPTS=F, pointCol='black',

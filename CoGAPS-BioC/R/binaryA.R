@@ -11,9 +11,6 @@
 #'@export
 binaryA <-function(Amean, Asd, threshold=3) {
 
-require(gplots)
-require(RColorBrewer)
-
 
 BinA_Map <- ifelse(Amean/Asd > threshold,1,0)
 colnames(BinA_Map) <-colnames(BinA_Map,do.NULL=F,prefix = "Pattern ")

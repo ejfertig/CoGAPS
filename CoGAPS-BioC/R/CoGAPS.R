@@ -31,15 +31,21 @@
 #'@param unc uncertainty matrix (std devs for chi-squared of Log Likelihood)
 #'@param GStoGenes data.frame or list with gene sets
 #'@param nFactor number of patterns (basis vectors, metagenes)
-#'@param  simulation_id name to attach to atoms files if created
-#'@param  nEquil number of iterations for burn-in
-#'@param  nSample number of iterations for sampling
-#'@param  nOutR how often to print status into R by iterations
-#'@param  output_atomic whether to write atom files (large)
-#'@param  alphaA, alphaP sparsity parameters for A and P domains
-#'@param  max_gibbmass_paraA(P) limit truncated normal to max size
-#'@param  nMaxA, nMaxP PRESENTLY UNUSED, future = limit number of atoms
-#'@param  lambdaA(P)_scale_factor lambda factor in penalized likelihood
+#'@param simulation_id name to attach to atoms files if created
+#'@param plot logical to determine if plots produced
+#'@param nPerm number of permutations for gene set test
+#'@param nEquil number of iterations for burn-in
+#'@param nSample number of iterations for sampling
+#'@param nOutR how often to print status into R by iterations
+#'@param output_atomic whether to write atom files (large)
+#'@param alphaA sparsity parameter for A domain 
+#'@param alphaP sparsity parameter for P domain 
+#'@param max_gibbmass_paraA limit truncated normal to max size for A
+#'@param max_gibbmass_paraP limit truncated normal to max size for P
+#'@param nMaxA PRESENTLY UNUSED, future = limit number of atoms for A
+#'@param nMaxP PRESENTLY UNUSED, future = limit number of atoms for P
+#'@param lambdaA_scale_factor lambda factor in penalized likelihood for A
+#'@param lambdaP_scale_factor lambda factor in penalized likelihood for P
 #'@export
 
 CoGAPS <- function(data, unc, GStoGenes, nFactor = "7", nEquil=1000,

@@ -19,8 +19,6 @@
 
 residuals=function(AMean_Mat, PMean_Mat, D, S)    
 {
-    require(gplots)
-    require(RColorBrewer)
 
     M_Mean <- AMean_Mat%*%PMean_Mat
     Resid_M_Mean<-as.matrix((D - M_Mean)/S)
