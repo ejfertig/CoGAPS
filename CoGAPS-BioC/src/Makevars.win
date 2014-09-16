@@ -1,4 +1,0 @@
-include ./boostdirs
-
-PKG_CXXFLAGS = -I"${boost_include}" -I"${boost_include_32}"
-PKG_LIBS = -L"${boost_lib}"  -L"${boost_lib_32}" 

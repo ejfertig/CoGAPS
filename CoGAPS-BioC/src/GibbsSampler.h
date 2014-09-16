@@ -11,7 +11,7 @@
 #include "sub_func.h"
 #include "Matrix.h"
 #include "AtomicSupport.h"
-#include<limits>
+#include <limits>
 
 using namespace gaps;
 

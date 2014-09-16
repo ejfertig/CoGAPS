@@ -172,6 +172,7 @@ void GibbsSampler::display_atomicdomain(char atomic_label){
 void GibbsSampler::local_display_matrix(vector<vector<double> > Mat, 
 					unsigned int n_row, unsigned int n_col)
 {
+  /* EJF commented for Bioconductor package
   cout << endl;
   for(unsigned int m=0;m<n_row;++m)
     {
@@ -182,14 +183,15 @@ void GibbsSampler::local_display_matrix(vector<vector<double> > Mat,
 	}
       cout << endl;
     }
-  cout << endl;
+  cout << endl; */
 }
 
 
 void GibbsSampler::local_display_matrix2(double ** Mat_ptr, 
 					 unsigned int n_row, unsigned int n_col)
 {
-  cout << endl;
+   /* EJF commented for Bioconductor package 
+   cout << endl;
   for(unsigned int m=0;m<n_row;++m)
     {
       for (unsigned int n=0; n<n_col;++n)
@@ -200,6 +202,7 @@ void GibbsSampler::local_display_matrix2(double ** Mat_ptr,
       cout << endl;
     }
   cout << endl;
+  */
 }
 
 void GibbsSampler::local_display_matrix2F(ofstream& outputFile, double ** Mat_ptr, 
@@ -219,8 +222,8 @@ void GibbsSampler::local_display_matrix2F(ofstream& outputFile, double ** Mat_pt
 
 // -----------------------------------------------------------------------------
 void GibbsSampler::check_results(){
-  double const * const * D = _DMatrix.get_matrix();
-  double const * const * S = _SMatrix.get_matrix();
+  // EJF double const * const * D = _DMatrix.get_matrix();
+  // EJF double const * const * S = _SMatrix.get_matrix();
   double const * const * A = _AMatrix.get_matrix();
   double const * const * P = _PMatrix.get_matrix();
 
@@ -235,14 +238,14 @@ void GibbsSampler::check_results(){
     }
   }
 
-  cout << "The product matrix AP = A*P is: " << endl;
+  //cout << "The product matrix AP = A*P is: " << endl;
   local_display_matrix(AP,_nRow,_nCol);
 
 }
 
 void GibbsSampler::check_resultsF(ofstream& outputFile){
-  double const * const * D = _DMatrix.get_matrix();
-  double const * const * S = _SMatrix.get_matrix();
+  // EJF double const * const * D = _DMatrix.get_matrix();
+  // EJF double const * const * S = _SMatrix.get_matrix();
   double const * const * A = _AMatrix.get_matrix();
   double const * const * P = _PMatrix.get_matrix();
 
@@ -327,6 +330,9 @@ unsigned int GibbsSampler::getRow( char matrix_label ,unsigned int iBin){
   case 'P':  // P - vertical addressing implicit
     { return iBin % _nFactor; break;}
   }
+
+  // EJF dummy return to avoid warnings
+  return iBin;
 }
 
 unsigned int GibbsSampler::getCol(char matrix_label ,unsigned int iBin){
@@ -336,6 +342,9 @@ unsigned int GibbsSampler::getCol(char matrix_label ,unsigned int iBin){
   case 'P':  // P - vertical addressing implicit
     { return floor(iBin / _nFactor); break;}
   }
+
+  // EJF dummy return to avoid warnings
+  return iBin;
 }
 
 
@@ -349,6 +358,9 @@ unsigned int GibbsSampler::getTotNumAtoms(char matrix_label){
     { return _PAtomicdomain.getNAtom();
       break;}
   }
+
+  // EJF dummy return to avoid warnings
+  return 0; 
 
 }
 
@@ -493,6 +505,10 @@ vector<vector<double> > GibbsSampler::atomicProposal2Matrix(char atomic_domain_l
       break;} // end of case 'P'
 
   } // end of switch  
+
+  // EJF dummy return to avoid warning
+  vector<vector<double> > newMatrix(0,vector<double>(0,0));
+  return newMatrix;
 } // end of atomicProposal2Matrix
 
 // -----------------------------------------------------------------------------
@@ -554,6 +570,10 @@ vector<vector<double> > GibbsSampler::atomicProposal2FullMatrix(char atomic_doma
       break;} // end of case 'P'
 
   } // end of switch  
+
+  // EJF dummy return to avoid warning
+  vector<vector<double> > newMatrix(0,vector<double>(0,0));
+  return newMatrix;
 } // end of atomicProposal2FullMatrix
 
 // ----------------------------------------------------------------------------
@@ -773,20 +793,11 @@ void GibbsSampler::update(char the_matrix_label){
       _atomicProposal = _AAtomicdomain.getProposedAtoms();
       extract_atomicProposal('A');
 	  
-      if (_nChange_atomicProposal == 1 && (_oper_type =='E' || _oper_type =='M'))
-	{cout << "update inconsistency A1! _nChange_atomicProposal = " << _nChange_atomicProposal <<
-	         ", _nChange_matrixElemChange = " << _nChange_matrixElemChange << 
-	         ", _oper_type = " << _oper_type << endl;}         
-      if (_nChange_atomicProposal == 2 && (_oper_type =='D' || _oper_type =='B'))
-	{cout << "update inconsistency A2! _nChange_atomicProposal = " << _nChange_atomicProposal << 
- 	         ", _nChange_matrixElemChange = " << _nChange_matrixElemChange << 
-	         ", _oper_type = " << _oper_type << endl;}   
-
       // ----------------------------------
       // the proposal is translated into a proposal to matrix A:
 	  
       // ----------- modify the proposal in a Gibbs way:      
-      unsigned int iRow, iCol, iFactor;
+      // EJF unsigned int iRow, iCol, iFactor;
       if ( _nChange_atomicProposal == 0){}
       if ( _nChange_atomicProposal> 2){
 	   throw logic_error("GibbsSampler: can't change more than two atoms!!");
@@ -818,20 +829,11 @@ void GibbsSampler::update(char the_matrix_label){
       _atomicProposal = _PAtomicdomain.getProposedAtoms();
       extract_atomicProposal('P');    
 
-      if (_nChange_atomicProposal == 1 && (_oper_type =='E' || _oper_type =='M'))
-	{cout << "update inconsistency P1! _nChange_atomicProposal = " << _nChange_atomicProposal <<
-	         ", _nChange_matrixElemChange = " << _nChange_matrixElemChange << 
-	         ", _oper_type = " << _oper_type << endl;}         
-      if (_nChange_atomicProposal == 2 && (_oper_type =='D' || _oper_type =='B'))
-	{cout << "update inconsistency P2! _nChange_atomicProposal = " << _nChange_atomicProposal << 
- 	         ", _nChange_matrixElemChange = " << _nChange_matrixElemChange << 
-	         ", _oper_type = " << _oper_type << endl;}   
-
       // ----------------------------------
       // the proposal is translated into a proposal to matrix P:
 
       // ----------- modify the proposal in a Gibbs way:     
-      unsigned int iRow, iCol, iFactor;
+      // EJF unsigned int iRow, iCol, iFactor;
       if (_nChange_atomicProposal== 0){}
       if (_nChange_atomicProposal > 2){
 	   throw logic_error("GibbsSampler: can't chnage more than two atoms!!");
@@ -908,7 +910,7 @@ bool GibbsSampler::death(char the_matrix_label,
   // read in the original _atomicProposal made from the prior
   unsigned long long location = _atomicProposal.begin()->first;
   double origMass = _atomicProposal.begin()->second;
-  unsigned int bin;
+  // EJF unsigned int bin;
   unsigned int iRow = _Row_changed[0];
   unsigned int iCol = _Col_changed[0];
   double delLL = 0;
@@ -1030,12 +1032,12 @@ bool GibbsSampler::birth(char the_matrix_label,
 
   double rng = 0.1; 
   double newMass = 0;
-  double attemptMass = 0;
+  // EJF double attemptMass = 0;
 
   // read in the original _atomicProposal made from the prior
   unsigned long long location = _atomicProposal.begin()->first;
   double origMass = _atomicProposal.begin()->second;
-  unsigned int bin;
+  // EJF unsigned int bin;
   unsigned int iRow = _Row_changed[0];
   unsigned int iCol = _Col_changed[0];
   double delLL = 0;
@@ -1141,7 +1143,7 @@ bool GibbsSampler::move(char the_matrix_label,
   atom++;
   chmass2 = atom->second;
   if (_atomicProposal.size()==1){
-  cout << "Not doing a move due to update inconsistency."<< endl;
+  //cout << "Not doing a move due to update inconsistency."<< endl;
   return false;
   }
 
@@ -1247,7 +1249,7 @@ bool GibbsSampler::move(char the_matrix_label,
       break;}
   }
 
-  double totalLL = priorLL + delLLnew * _annealingTemperature;
+  // EJF double totalLL = priorLL + delLLnew * _annealingTemperature; MFO check
 
   _new_nChange_matrixElemChange = 2;
   _new_atomicProposal.insert(pair<unsigned long long, double>(loc1,newMass1-mass1));
@@ -1394,10 +1396,10 @@ bool GibbsSampler::exchange(char the_matrix_label,
 
 
   // preparing quantities for possible Gibbs computation later.
-  bool exchange = false;
+  // EJF bool exchange = false;
   double priorLL = 0.;
 
-  unsigned int jGene, jSample, jPattern;
+  unsigned int jGene, jSample;
   bool anyNonzero = false;
   bool useGibbs = true;
 
@@ -1460,7 +1462,7 @@ bool GibbsSampler::exchange(char the_matrix_label,
   // -------------------------------------------------------------------------
   // EXCHANGE ACTION when initial useGibbs = true and check if Gibbs is usable.
 
-  double s, su, mean, sd;
+  double s=0.0, su, mean, sd; // EJF -- MFO check
   pair <double, double> alphaparam;
 
   if (useGibbs == true){
@@ -1635,7 +1637,7 @@ bool GibbsSampler::exchange(char the_matrix_label,
       break;}
   }
 
-  double totalLL = priorLL + delLLnew * _annealingTemperature;
+  // EJF double totalLL = priorLL + delLLnew * _annealingTemperature; MFO check
 
   _new_nChange_matrixElemChange = 2;
   _new_atomicProposal.insert(pair<unsigned long long, double>(loc1,newMass1-mass1));
@@ -1745,10 +1747,11 @@ void GibbsSampler::check_atomic_matrix_consistency(char the_matrix_label)
   double diff_total_mass = fabs(total_atom_mass - total_matrix_mass);
 
   if(diff_total_mass > 1.e-5){
-    cout << "Mass inconsistency!! Total mass difference = " << diff_total_mass << endl;
+    /*cout << "Mass inconsistency!! Total mass difference = " << diff_total_mass << endl;
     cout << "total atom mass = " << total_atom_mass << endl;
     cout << "total matrix mass = " << total_matrix_mass << endl;
     cout << "Oper_type = " << _oper_type << endl;
+    */
     throw logic_error("Mass inconsistency between atomic domain and matrix!");
   } 
   
@@ -2204,10 +2207,10 @@ double GibbsSampler::getMass(char the_matrix_label, double origMass,
 void GibbsSampler::detail_check(char outputchi2_Filename[]){
 
       double chi2 = 2.*cal_logLikelihood();
-      cout << "oper_type: " << _oper_type <<
+      /*cout << "oper_type: " << _oper_type <<
               " ,nA: " << getTotNumAtoms('A') <<
 	      " ,nP: " << getTotNumAtoms('P') << 
-              " ,_sysChi2 = " << _sysChi2 << endl;
+              " ,_sysChi2 = " << _sysChi2 << endl;*/
 
 
       ofstream outputchi2_File;

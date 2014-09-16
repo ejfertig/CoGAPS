@@ -13,15 +13,13 @@
 // ------ incorporated to use Cogaps_options ------------
 #include <vector>
 #include <iomanip>
-//#include <boost/program_options.hpp>
-//#include "Cogaps_options.hpp"
 #include <boost/algorithm/string.hpp>
 // ------------------------------------------------------
-#include "randgen.h";   // for incorporating a random number generator.
-#include "Matrix.h";    // for incorporating a Matrix class
-#include "AtomicSupport.h";  // for incorporating an Atomic class
-#include "GAPSNorm.h";  // for incorporating calculation of statistics in cogaps.
-#include "GibbsSampler.h"; // for incorporating the GibbsSampler which
+#include "randgen.h"   // for incorporating a random number generator.
+#include "Matrix.h"    // for incorporating a Matrix class
+#include "AtomicSupport.h"  // for incorporating an Atomic class
+#include "GAPSNorm.h"  // for incorporating calculation of statistics in cogaps.
+#include "GibbsSampler.h" // for incorporating the GibbsSampler which
                            // does all the atomic space to matrix conversion
                            // and sampling actions.
 #include <Rcpp.h>
@@ -34,68 +32,8 @@ using std::vector;
 
 boost::mt19937 rng(43);
 
-/* TEST FUNCTION FOR SANDBOX USE
-Rcpp::List testCoGapRcpp(Rcpp::DataFrame D, Rcpp::DataFrame S, Rcpp::CharacterVector Config)
-{
-	int numArgs = 3;
-	
-	Rcpp::List All(numArgs);
-	
-	All[0] = D;
-	All[1] = S;
-	All[2] = Config;
-	
-	Rcpp::Rcout << Config[0] << endl << Config[1] << endl << Config[2] << endl;
-	
-	string test = Rcpp::as<string>(Config[0]);
-	
-	if(test == "7")
-	{
-		Rcpp::Rcout << "Success!" << endl;
-	}
-	
-	return(All);
-}
-*/
-
 // [[Rcpp::export]]
 Rcpp::List cogaps(Rcpp::DataFrame DFrame, Rcpp::DataFrame SFrame, Rcpp::CharacterVector Config){
-
-	int NUM_DATA_FILES = 6;
-	
-	//--CONOR'S ADDITIONS
-	
-	//Rcpp::Rcout << "Here!" << endl;
-	
-	//char* av[5];
-	//int ac;
-	
-	//Temp variable for testing sections of code.
-	int cogapexit = 1;
-	
-	
-	
-	
-  // global objects for the program:
-  
-  //CONOR COMMENTS START
-  /*
-  Cogaps_options_class Cogaps_options(ac, av);
-  try {
-    // Cogaps_options_class Cogaps_options(ac, av); // WS -- change from Sasha's
-    if (Cogaps_options.to_help){
-      Cogaps_options.help(cout);
-      return 0;
-    }
-    //cout << Cogaps_options; 
-  } 
-  catch( const exception & e) {
-    cerr <<e.what()<<endl;
-    return 1;
-  }
-  
-  */
-//CONOR COMMENTS END
 
   // ===========================================================================
   // Initialization of the random number generator.
@@ -117,21 +55,7 @@ Rcpp::List cogaps(Rcpp::DataFrame DFrame, Rcpp::DataFrame SFrame, Rcpp::Characte
   // matrix forms.
   // ===========================================================================
 
-  // Parameters or data to be read in:
-  
-  //--------------------------------------------------------
-  //CONORS ADDITIONS
-  //REMOVED BOOST PROGRAM OPTIONS
-  //SCAN IN VARIABLES FROM CONFIG FILES INTO COMMAND LINE 
-  
-  //TESTING OUTPUTS WITH ITERATOR
-  /*
-	for(Rcpp::CharacterVector::iterator i = Config.begin(); i != Config.end(); ++i)
-	{
-		Rcpp::Rcout << *i << endl;
-	}
-	*/
-//
+
 
 //---------------------------------------------
 //CONOR'S CODE FOR CHANGING R VARIABLES OF THE CONFIG FILE INTO C VARIABLES
@@ -242,23 +166,15 @@ Rcpp::List cogaps(Rcpp::DataFrame DFrame, Rcpp::DataFrame SFrame, Rcpp::Characte
 			tempFrameCol = SFrame[j];
 			tempFrameElement = tempFrameCol[i];
 			SVector[i][j] = tempFrameElement;
-			//Rcpp::Rcout << DVector[i][j] << endl;
 		}
 	}
 	//--------------------END CREATING D AND S C++ VECTORS
 
 
   // Parameters or structures to be calculated or constructed:
-  unsigned int nRow;       // number of items in observation (= # of genes)
-  unsigned int nCol;       // number of observation (= # of arrays)
-  unsigned int nBinsA;     // number of atomic bins for A
-  unsigned int nBinsP;     // number of atomic bins for P
-  double lambdaA;
-  double lambdaP;
   unsigned long nIterA = 10;    // initial inner loop iterations for A
   unsigned long nIterP = 10;    // initial inner loop iterations for P  
-  //atomic At, Pt;           // atomic space for A and P respectively
-  unsigned long atomicSize; // number of atomic points
+  unsigned long atomicSize = 0; // number of atomic points
 
   char label_A = 'A';  // label for matrix A
   char label_P = 'P';  // label for matrix P
@@ -270,60 +186,11 @@ Rcpp::List cogaps(Rcpp::DataFrame DFrame, Rcpp::DataFrame SFrame, Rcpp::Characte
   
   //---------------------------------------------------------------------------
   //ENTIRE SECTION ONLY RELEVANT FOR R VERSION 
-  /*
-  char outputFilename[80];
-  strcpy(outputFilename,simulation_id.c_str());
-  strcat(outputFilename,"_computing_info.txt");
-  
- 
-  ofstream outputFile;
-  outputFile.open(outputFilename,ios::out);  // start by deleting previous content and 
-                                             // rewriting the file
-  outputFile << "Common parameters and info:" << endl;
-//outputFile << "input data file: " << datafile << endl;
-//outputFile << "input variance file: " << variancefile << endl;
-  outputFile << "simulation id: " << simulation_id << endl;
-  outputFile << "nFactor = " << nFactor << endl;
-  outputFile << "nEquil = " << nEquil << endl;
-  outputFile << "nSample = " << nSample << endl;
-  outputFile << "Q_output_atomic (bool) = " << Q_output_atomic << endl << endl;
 
-  outputFile << "Parameters for A:" << endl;
-  outputFile << "alphaA = " << alphaA << endl;
-  outputFile << "nMaxA = " << nMaxA << endl;
-  outputFile << "nIterA = " << nIterA << endl;
-  outputFile << "max_gibbsmass_paraA = " << max_gibbsmass_paraA << endl;
-  outputFile << "lambdaA_scale_factor = " << lambdaA_scale_factor << endl << endl;
-
-  outputFile << "Parameters for P:" << endl;
-  outputFile << "alphaP = " << alphaP << endl;
-  outputFile << "nMaxP = " << nMaxP << endl;
-  outputFile << "nIterP = " << nIterP << endl;
-  outputFile << "max_gibbsmass_paraP = " << max_gibbsmass_paraP << endl;
-  outputFile << "lambdaP_scale_factor = " << lambdaP_scale_factor << endl << endl;
-
-  outputFile.close();
-  //--------------------------------------------------------------------------------
-  */
-
-	
-
-	
-//CONOR CODE END
 
   // ---------------------------------------------------------------------------
   // Initialize the GibbsSampler.
 
-  /*Regular Version
-  GibbsSampler GibbsSamp(nEquil,nSample,nFactor,   // construct GibbsSampler and 
-                         alphaA,alphaP,nMaxA,nMaxP,// Read in D and S matrices
-                         nIterA,nIterP,
-			 max_gibbsmass_paraA, max_gibbsmass_paraP, 
-			 lambdaA_scale_factor, lambdaP_scale_factor,
-                         atomicSize,
-                         label_A,label_P,label_D,label_S,
-			 datafile,variancefile,simulation_id);
-	*/
   //R Version
   GibbsSampler GibbsSamp(nEquil,nSample,nFactor,   // construct GibbsSampler and 
                          alphaA,alphaP,nMaxA,nMaxP,// Read in D and S matrices
@@ -334,7 +201,6 @@ Rcpp::List cogaps(Rcpp::DataFrame DFrame, Rcpp::DataFrame SFrame, Rcpp::Characte
                          label_A,label_P,label_D,label_S,
 			 DVector,SVector,simulation_id);
 			 
-	//Rcpp::Rcout << "Made Object!" << endl;
 
   // ---------------------------------------------------------------------------
   // Based on the information of D, construct and initialize for A and P both 
@@ -354,22 +220,9 @@ Rcpp::List cogaps(Rcpp::DataFrame DFrame, Rcpp::DataFrame SFrame, Rcpp::Characte
   // of A and P respectively.
   // ===========================================================================
 
-      // --------- temp for initializing output to chi2.txt
-	  //REMOVED FOR R VERSION
-	  /*
-      char outputchi2_Filename[80];
-      strcpy(outputchi2_Filename,simulation_id.c_str());
-      strcat(outputchi2_Filename,"_chi2.txt");
-      ofstream outputchi2_File;
-      outputchi2_File.open(outputchi2_Filename,ios::out);
-      outputchi2_File << "chi2" << endl;
-      outputchi2_File.close();
-	  */
-      // --------------
-      
 
-  double chi2;
-  double tempChiSq;
+    double chi2;
+    double tempChiSq;
   double tempAtomA;
   double tempAtomP;
 	int outCount = 0;

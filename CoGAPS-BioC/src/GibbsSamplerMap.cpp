@@ -274,17 +274,8 @@ void GibbsSamplerMap::mapUpdate(char the_matrix_label){
       extract_atomicProposal('A');
 	  
 	  // Check to make sure there are no problems with the proposal
-      if (_nChange_atomicProposal == 1 && (_oper_type =='E' || _oper_type =='M'))
-	{cout << "update inconsistency A1! _nChange_atomicProposal = " << _nChange_atomicProposal <<
-	         ", _nChange_matrixElemChange = " << _nChange_matrixElemChange << 
-	         ", _oper_type = " << _oper_type << endl;}         
-      if (_nChange_atomicProposal == 2 && (_oper_type =='D' || _oper_type =='B'))
-	{cout << "update inconsistency A2! _nChange_atomicProposal = " << _nChange_atomicProposal << 
- 	         ", _nChange_matrixElemChange = " << _nChange_matrixElemChange << 
-	         ", _oper_type = " << _oper_type << endl;}   
 	
-	  if ( _nChange_atomicProposal == 0){}
-      if ( _nChange_atomicProposal> 2){
+       if ( _nChange_atomicProposal> 2){
 	   throw logic_error("GibbsSampler: can't change more than two atoms!!");
        }
 	  
@@ -376,15 +367,6 @@ void GibbsSamplerMap::mapUpdate(char the_matrix_label){
       extract_atomicProposal('P');
 	  
 	  // Check to make sure there are no problems with the proposal
-      if (_nChange_atomicProposal == 1 && (_oper_type =='E' || _oper_type =='M'))
-	{cout << "update inconsistency P1! _nChange_atomicProposal = " << _nChange_atomicProposal <<
-	         ", _nChange_matrixElemChange = " << _nChange_matrixElemChange << 
-	         ", _oper_type = " << _oper_type << endl;}         
-      if (_nChange_atomicProposal == 2 && (_oper_type =='D' || _oper_type =='B'))
-	{cout << "update inconsistency P2! _nChange_atomicProposal = " << _nChange_atomicProposal << 
- 	         ", _nChange_matrixElemChange = " << _nChange_matrixElemChange << 
-	         ", _oper_type = " << _oper_type << endl;}   
-	
 	  if ( _nChange_atomicProposal == 0){}
       if ( _nChange_atomicProposal> 2){
 	   throw logic_error("GibbsSampler: can't change more than two atoms!!");
@@ -670,7 +652,7 @@ void GibbsSamplerMap::mappedBirth(char the_matrix_label,
 {
   double rng = 0.1; 
   double newMass = 0;
-  double attemptMass = 0;
+  // EJF double attemptMass = 0;
 
   // read in the original _atomicProposal made from the prior
   unsigned long long location = _atomicProposal.begin()->first;
@@ -794,7 +776,7 @@ void GibbsSamplerMap::mappedMove(char the_matrix_label,
   atom++;
   chmass2 = atom->second;
   if (_atomicProposal.size()==1){
-  cout << "Not doing a move due to update inconsistency."<< endl;
+  //cout << "Not doing a move due to update inconsistency."<< endl;
   return;
   }
  
@@ -883,7 +865,7 @@ void GibbsSamplerMap::mappedMove(char the_matrix_label,
 
   vector <double> newPat1;
   vector <double> newPat2;
-  double delLLnew;
+  double delLLnew = 0.0; // EJF - MFO check if this changes calc from del LL
   bool makeChange;
 
    // Calculate the change in the patterns and evaluate corresponding changes
@@ -897,7 +879,7 @@ void GibbsSamplerMap::mappedMove(char the_matrix_label,
    delLLnew+= computeDeltaLLMEMap(the_matrix_label, D,S,AOrig,POrig,newPat1,pat1,newPat2,pat2);
   
 
-  double totalLL = priorLL + delLLnew * _annealingTemperature;
+  // EJF: MFO check double totalLL = priorLL + delLLnew * _annealingTemperature;
 
   double tmp;
   
@@ -1050,10 +1032,10 @@ void GibbsSamplerMap::mappedExchange(char the_matrix_label,
   vector <double> newPat2;
 
   // preparing quantities for possible Gibbs computation later.
-  bool exchange = false;
+  // EJF  bool exchange = false;
   double priorLL = 0.;
 
-  unsigned int jGene, jSample, jPattern;
+  unsigned int jGene, jSample;
   bool anyNonzero = false;
   bool useGibbs = true;
 
@@ -1116,7 +1098,7 @@ void GibbsSamplerMap::mappedExchange(char the_matrix_label,
   // -------------------------------------------------------------------------
   // EXCHANGE ACTION when initial useGibbs = true and check if Gibbs is usable.
 
-  double s, su, mean, sd;
+  double s=0., su, mean, sd; // EJF- MFO check
   pair <double, double> alphaparam;
 
   if (useGibbs == true){
@@ -1205,8 +1187,8 @@ void GibbsSamplerMap::mappedExchange(char the_matrix_label,
       gibbsMass2 = - gibbsMass1;
 
 
-      double delLLnew;
-	  bool makeChange1, makeChange2;
+      double delLLnew=0.0; // EJF -- MFO check if fixes delLL calc
+      bool makeChange1, makeChange2;
 	  
       _new_atomicProposal.insert(pair<unsigned long long, double>(loc1,gibbsMass1));
       _new_atomicProposal.insert(pair<unsigned long long, double>(loc2,gibbsMass2));
@@ -1306,7 +1288,7 @@ void GibbsSamplerMap::mappedExchange(char the_matrix_label,
     priorLL = log(pnew / pold);
   }
 	 
-  double delLLnew;
+  double delLLnew=0.0; // EJF - MFO check if fixes delLL
   bool makeNewCh1, makeNewCh2;
 
    makeNewCh1 = calc_new_matrix_Pattern(the_matrix_label, newPat1, loc1, newMass1-mass1);
@@ -1315,7 +1297,7 @@ void GibbsSamplerMap::mappedExchange(char the_matrix_label,
    delLLnew+= computeDeltaLLMEMap(the_matrix_label, D,S,AOrig,POrig,newPat1,pat1,newPat2,pat2);
   
 
-  double totalLL = priorLL + delLLnew * _annealingTemperature;
+  // EJF- MFO check double totalLL = priorLL + delLLnew * _annealingTemperature;
  
 
   double tmp;
@@ -1375,7 +1357,7 @@ void GibbsSamplerMap::mappedExchange(char the_matrix_label,
                                      vector <double> &PatternUpdate,
                                      unsigned long long location, double mass){
   unsigned int theBin, thePat;
-  int flag = 0;
+  // EJF int flag = 0;
   switch (the_matrix_label){
    case 'A':
    {

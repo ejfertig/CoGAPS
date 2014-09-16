@@ -286,7 +286,7 @@ void Matrix::matrix_Elem_update(vector<boost::tuple<unsigned int, unsigned int, 
 // print out a matrix on the output
 // USED FOR DEBUGGING
 void Matrix::display_matrix() {
-    cout << endl;
+    /*cout << endl;
     cout << "The matrix " << _label << " is: " << endl;
     for(int m=0;m<_n_row;++m) {
         for (int n=0; n<_n_col;++n) {
@@ -296,6 +296,7 @@ void Matrix::display_matrix() {
         cout << endl;
     }
     cout << endl;
+    */
 }
 
 void Matrix::display_matrixF(ofstream& outputFile) {

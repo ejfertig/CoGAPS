@@ -13,15 +13,13 @@
 // ------ incorporated to use Cogaps_options ------------
 #include <vector>
 #include <iomanip>
-//#include <boost/program_options.hpp>
-//#include "Cogaps_options.hpp"
 #include <boost/algorithm/string.hpp>
 // ------------------------------------------------------
-#include "randgen.h";   // for incorporating a random number generator.
-#include "Matrix.h";    // for incorporating a Matrix class
-#include "AtomicSupport.h";  // for incorporating an Atomic class
-#include "GAPSNorm.h";  // for incorporating calculation of statistics in cogaps.
-#include "GibbsSampler.h"; // for incorporating the GibbsSampler which
+#include "randgen.h"   // for incorporating a random number generator.
+#include "Matrix.h"    // for incorporating a Matrix class
+#include "AtomicSupport.h"  // for incorporating an Atomic class
+#include "GAPSNorm.h"  // for incorporating calculation of statistics in cogaps.
+#include "GibbsSampler.h" // for incorporating the GibbsSampler which
                            // does all the atomic space to matrix conversion
                            // and sampling actions.
 #include "GibbsSamplerMap.h"
@@ -62,7 +60,7 @@ Rcpp::List testCoGapRcpp(Rcpp::DataFrame D, Rcpp::DataFrame S, Rcpp::CharacterVe
 // [[Rcpp::export]]
 Rcpp::List cogapsmap(Rcpp::DataFrame DFrame, Rcpp::DataFrame SFrame, Rcpp::DataFrame FixedPatt, Rcpp::CharacterVector Config){
 
-	int NUM_DATA_FILES = 6;
+	// EJF int NUM_DATA_FILES = 6;
 	
 	//--CONOR'S ADDITIONS
 	
@@ -72,7 +70,7 @@ Rcpp::List cogapsmap(Rcpp::DataFrame DFrame, Rcpp::DataFrame SFrame, Rcpp::DataF
 	//int ac;
 	
 	//Temp variable for testing sections of code.
-	int cogapexit = 1;
+	// EJF int cogapexit = 1;
 	
 	
 	
@@ -271,16 +269,16 @@ Rcpp::List cogapsmap(Rcpp::DataFrame DFrame, Rcpp::DataFrame SFrame, Rcpp::DataF
    
 
   // Parameters or structures to be calculated or constructed:
-  unsigned int nRow;       // number of items in observation (= # of genes)
-  unsigned int nCol;       // number of observation (= # of arrays)
-  unsigned int nBinsA;     // number of atomic bins for A
-  unsigned int nBinsP;     // number of atomic bins for P
-  double lambdaA;
-  double lambdaP;
+  // EJF unsigned int nRow;       // number of items in observation (= # of genes)
+  // EJF unsigned int nCol;       // number of observation (= # of arrays)
+  // EJF unsigned int nBinsA;     // number of atomic bins for A
+  // EJF unsigned int nBinsP;     // number of atomic bins for P
+  // EJF double lambdaA;
+  // EJF double lambdaP;
   unsigned long nIterA = 10;    // initial inner loop iterations for A
   unsigned long nIterP = 10;    // initial inner loop iterations for P  
   //atomic At, Pt;           // atomic space for A and P respectively
-  unsigned long atomicSize; // number of atomic points
+  unsigned long atomicSize = 0; // number of atomic points
 
   char label_A = 'A';  // label for matrix A
   char label_P = 'P';  // label for matrix P
