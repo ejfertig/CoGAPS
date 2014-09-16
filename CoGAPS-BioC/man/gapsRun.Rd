@@ -29,13 +29,21 @@ gapsRun(D, S, nFactor = "7", simulation_id = "simulation",
 
 \item{output_atomic}{whether to write atom files (large)}
 
-\item{alphaA,}{alphaP sparsity parameters for A and P domains}
+\item{alphaA}{sparsity parameter for A domain}
 
-\item{max_gibbmass_paraA(P)}{limit truncated normal to max size}
+\item{alphaP}{sparsity parameter for P domain}
 
-\item{nMaxA,}{nMaxP PRESENTLY UNUSED, future = limit number of atoms}
+\item{max_gibbmass_paraA}{limit truncated normal to max size in A}
 
-\item{lambdaA(P)_scale_factor}{lambda factor in penalized likelihood}
+\item{max_gibbmass_paraP}{limit truncated normal to max size in P}
+
+\item{nMaxA}{PRESENTLY UNUSED, future = limit number of atoms in A}
+
+\item{nMaxP}{PRESENTLY UNUSED, future = limit number of atoms in P}
+
+\item{lambdaA_scale_factor}{lambda factor in penalized likelihood in A}
+
+\item{lambdaP_scale_factor}{lambda factor in penalized likelihood in P}
 }
 \description{
 \code{gapsRun} calls the C++ MCMC code and performs Bayesian

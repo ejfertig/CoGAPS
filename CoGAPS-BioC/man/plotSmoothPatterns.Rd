@@ -24,6 +24,11 @@ plotSmoothPatterns(P, x = NULL, breaks = NULL, breakStyle = T,
 \item{pointCol}{color of points}
 
 \item{lineCol}{color of line}
+
+\item{add}{add}{logical specifying if bars should be added to an already existing plot; defaults to \code{FALSE}}
+
+\item{...}{arguments to be passed to/from other methods.  For the default method these can include further arguments (such as \code{axes}, \code{asp} and \code{main}) and graphical parameters (see \code{par}) which are passed to \code{plot.window()}, \code{title()} and \code{axis}}
+
 }
 \description{
 \code{plotSmoothPatterns} plots the output A and P matrices as a

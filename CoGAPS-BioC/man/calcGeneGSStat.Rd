@@ -5,7 +5,7 @@
 listed in a gene set behaves like other genes in the set within
 the given data set}
 \usage{
-calcGeneGSStat(Amean, Asd, GSGenes, numPerm, Pw = rep(1, ncol(Amean)),
+calcGeneGSStat(Amean, Asd, GStoGenes, numPerm, Pw = rep(1, ncol(Amean)),
   nullGenes = F)
 }
 \arguments{

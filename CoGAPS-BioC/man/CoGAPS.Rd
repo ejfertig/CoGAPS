@@ -24,6 +24,10 @@ CoGAPS(data, unc, GStoGenes, nFactor = "7", nEquil = 1000, nSample = 1000,
 
 \item{simulation_id}{name to attach to atoms files if created}
 
+\item{plot}{logical to determine if plots produced}
+
+\item{nPerm}{number of permutations for gene set test}
+
 \item{nEquil}{number of iterations for burn-in}
 
 \item{nSample}{number of iterations for sampling}
@@ -32,13 +36,21 @@ CoGAPS(data, unc, GStoGenes, nFactor = "7", nEquil = 1000, nSample = 1000,
 
 \item{output_atomic}{whether to write atom files (large)}
 
-\item{alphaA,}{alphaP sparsity parameters for A and P domains}
+\item{alphaA}{sparsity parameter for A domain} 
 
-\item{max_gibbmass_paraA(P)}{limit truncated normal to max size}
+\item{alphaP}{sparsity parameter for P domain} 
 
-\item{nMaxA,}{nMaxP PRESENTLY UNUSED, future = limit number of atoms}
+\item{max_gibbmass_paraA}{limit truncated normal to max size for A}
 
-\item{lambdaA(P)_scale_factor}{lambda factor in penalized likelihood}
+\item{max_gibbmass_paraP}{limit truncated normal to max size for P}
+
+\item{nMaxA}{PRESENTLY UNUSED, future = limit number of atoms for A}
+
+\item{nMaxP}{PRESENTLY UNUSED, future = limit number of atoms for P}
+
+\item{lambdaA_scale_factor}{lambda factor in penalized likelihood for A}
+
+\item{lambdaP_scale_factor}{lambda factor in penalized likelihood for P}
 }
 \description{
 \code{CoGAPS} calls the C++ MCMC code through gapsRun and performs Bayesian

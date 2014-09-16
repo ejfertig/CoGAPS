@@ -9,7 +9,7 @@ reorderByPatternMatch(P, matchTo)
 \arguments{
 \item{P}{matrix to be matched}
 
-\item{matchto}{matrix to match P to}
+\item{matchTo}{matrix to match P to}
 }
 \description{
 \code{reorderByPatternMatch} plots the output A and P matrices as a
