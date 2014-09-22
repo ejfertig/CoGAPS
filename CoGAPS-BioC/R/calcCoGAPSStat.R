@@ -65,7 +65,7 @@ calcCoGAPSStat <- function (Amean, Asd, GStoGenes, numPerm=500) {
     numGenes <- length(zValues)
     label <- as.character(numGenes)
     
-    if (!exists(label,envir=results)) {
+    if (!any(names(results)==label)) {
       for (p in 1:numPatt) {
         for (j in 1:numPerm) {
           temp <- floor(runif(numGenes,1,numG))
@@ -77,7 +77,7 @@ calcCoGAPSStat <- function (Amean, Asd, GStoGenes, numPerm=500) {
     }
   }
 
-  # get p-value
+# get p-value
   for (p in 1:numPatt) {
 
     for (gs in 1:numGS) {
@@ -90,7 +90,7 @@ calcCoGAPSStat <- function (Amean, Asd, GStoGenes, numPerm=500) {
       numGenes <- length(zValues)
       label <- as.character(numGenes)
 
-      permzValues <- get(label, envir=results)[p,]
+      permzValues <- results[[label]]
       ordering <- order(permzValues)
       permzValues <- permzValues[ordering]
 

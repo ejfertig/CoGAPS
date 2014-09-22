@@ -46,6 +46,14 @@
 
 gapsMapRun <- function(D, S, FP, nFactor = "7", simulation_id = "simulation", nEquil = "1000", nSample = "1000", nOutR = 1000, output_atomic = "FALSE", alphaA = "0.01",  nMaxA = "100000", max_gibbmass_paraA = "100.0", lambdaA_scale_factor = "1.0", alphaP = "0.01", nMaxP = "100000", max_gibbmass_paraP = "100.0", lambdaP_scale_factor = "1.0")
 {
+    
+    # scale fixed patterns to have norm 1
+    FPS <- apply(FP,1,sum)
+    if (any(FPS==0) | any(FP<0)) {
+        stop('Fixed patterns in FP must be non-negative and have non-zero norm')
+    }
+    FP <- sweep(FP,1,FPS,FUN="/")
+    
     # pass all settings to C++ within a list
     #    if (is.null(P)) {
         Config = c(nFactor, simulation_id, nEquil, nSample, nOutR,

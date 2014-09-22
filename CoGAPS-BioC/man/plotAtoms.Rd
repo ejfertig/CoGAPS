@@ -9,12 +9,11 @@ plotAtoms(gapsRes, type = "sampA")
 \arguments{
 \item{gapsRes}{the list resulting from applying GAPS}
 
-\item{type}{the atoms to plot, values are "sampA", "sampP" ,
-"equilA", or "equilP" to plot sampling or equilibration teop
+\item{type}{the atoms to plot, values are \code{sampA}, \code{sampP} ,
+\code{equilA}, or \code{equilP} to plot sampling or equilibration teop
 atome numbers}
 }
 \description{
-\code{plotAtoms} a simple plot of the number of atoms
-from one of the vectors returned with atom numbers
+\code{plotAtoms} a simple plot of the number of atoms during the sampling period or equilibration periodfrom one of either A or P as specified in \code{type}.
 }
 

@@ -1,7 +1,7 @@
 export(CoGAPS)
 export(binaryA)
 export(calcCoGAPSStat)
-export(calcGeneGSStat)
+export(computeGeneGSProb)
 export(gapsMapRun)
 export(gapsRun)
 export(plotAtoms)

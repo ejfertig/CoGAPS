@@ -47,7 +47,41 @@ gapsRun(D, S, nFactor = "7", simulation_id = "simulation",
 }
 \description{
 \code{gapsRun} calls the C++ MCMC code and performs Bayesian
-matrix factorization returning the two matrices that reconstruct
-the data matrix
+matrix factorization returning the two matrices (A and P) whose product reconstruct
+the data matrix (D).  
 }
+
+\details{The decomposition in GAPS is achieved by finding amplitude and pattern matrices (\eqn{{\bf{A}}} and \eqn{{\bf{P}}}, respectively) for which \deqn{{\bf{D}} = {\bf{A}}{\bf{P}} + \Sigma}, where \eqn{\Sigma} is the matrix of uncertainties given by S.  The matrices \eqn{\bf{A}} and \eqn{\bf{P}} are assumed to have the atomic prior described in Sibisi and Skilling (1997) and are found with MCMC sampling.}
+
+\value{
+  A list containing:
+  \item{Amean}{Sampled mean value of the amplitude matrix \eqn{{\bf{A}}}.}
+  \item{Asd}{Sampled standard deviation of the amplitude matrix \eqn{{\bf{A}}}.}
+  \item{Pmean}{Sampled mean value of the amplitude matrix \eqn{{\bf{P}}}.}
+  \item{Psd}{Sampled standard deviation of the amplitude matrix \eqn{{\bf{P}}}.}
+  \item{atomsAEquil}{Number of atoms in \eqn{{\bf{A}}} during each iteration of the equilibration phase.}
+  \item{atomsASamp}{Number of atoms in \eqn{{\bf{A}}} during each iteration of the sampling phase.}
+  \item{atomsPEquil}{Number of atoms in \eqn{{\bf{P}}} during each iteration of the equilibration phase.}
+  \item{atomsPSamp}{Number of atoms in \eqn{{\bf{P}}} during each iteration of the sampling phase.}
+  \item{chiSqValues}{Value of \eqn{chi^2} at each step during equilibration and sampling.} 
+  \item{meanChi2}{Value of \eqn{chi^2} for Amean and Pmean.}
+}
+
+\examples{
+\dontrun{
+## Load data
+data('SimpSim')
+
+## Run GAPS matrix decomposition
+nIter <- 5000
+results <- gapsRun(SimpSim.D, SimpSim.S, nFactor=3,
+                   nEquil=nIter, nSample=nIter)
+
+## Plot the results
+plotGAPS(results$Amean, results$Pmean, 'GSFigs')
+}
+}
+
+\seealso{\code{\link{CoGAPS}}}
+\keyword{misc}
 

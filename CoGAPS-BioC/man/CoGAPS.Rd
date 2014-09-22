@@ -56,6 +56,53 @@ CoGAPS(data, unc, GStoGenes, nFactor = "7", nEquil = 1000, nSample = 1000,
 \code{CoGAPS} calls the C++ MCMC code through gapsRun and performs Bayesian
 matrix factorization returning the two matrices that reconstruct
 the data matrix and then calls calcCoGAPSStat to estimate gene set
-activity with nPerm set to 500
+activity.
 }
 
+\details{
+  CoGAPS first decomposes the data matrix using GAPS, \eqn{{\bf{D}}}, into a basis of underlying patterns and then determines the gene set activity in each of these patterns.
+
+  The GAPS decomposition is achieved by finding amplitude and pattern matrices (\eqn{{\bf{A}}} and \eqn{{\bf{P}}}, respectively) for which \deqn{{\bf{D}} = {\bf{A}}{\bf{P}} + \Sigma,} where \eqn{\Sigma} is the matrix of uncertainties given by unc.  The matrices \eqn{\bf{A}} and \eqn{\bf{P}} are assumed to have the atomic prior described in Sibisi and Skilling (1997) and are found with MCMC sampling.
+
+Then, the patterns identified in the columns of \eqn{\bf{P}} are linked to activity in each of the gene sets specified in GStoGenes using a novel z-score based statistic developed in Ochs et al. (2009).  Specifically, the z-score for pattern \eqn{p} and gene set \eqn{G_{i}} containing $G$ total genes is given by \deqn{Z_{i,p} = \frac{1}{G} \sum_{g in \mathcal{G_{i}}} {\frac{{\bf{A}_{gp}}}{Asd_{gp}}},}  
+where \eqn{g} indexes the genes in the set and \eqn{Asd_{gp}} is the standard deviation of \eqn{{\bf{A}}_{gp}} obtained from MCMC sampling.  CoGAPS then uses the specified \code{nPerm} random sample tests to compute a consistent p value estimate from that z score.  Note that the data from Ochs et al. (2009) are provided with this package in GIST_TS_20084.RData and TFGSList.RData are also provided with this package for further validation.}
+
+\value{
+  A list containing:
+  \item{Amean}{Sampled mean value of the amplitude matrix \eqn{{\bf{A}}}.}
+  \item{Asd}{Sampled standard deviation of the amplitude matrix \eqn{{\bf{A}}}.}  
+  \item{Pmean}{Sampled mean value of the amplitude matrix \eqn{{\bf{P}}}.}
+  \item{Psd}{Sampled standard deviation of the amplitude matrix \eqn{{\bf{P}}}.}
+  \item{D}{Data matrix \eqn{{\bf{D}}} input to factorization.}
+  \item{Sigma}{uncertainty matrix (std devs for chi-squared of Log Likelihood)}
+  \item{GSUpreg}{p-values for upregulation of each gene set in each pattern.}
+  \item{GSDownreg}{p-values for downregulation of each gene set in each pattern.}
+  \item{GSActEst}{p-values for activity of each gene set in each pattern.}
+  \item{atomsAEquil}{Number of atoms in \eqn{{\bf{A}}} during each iteration of the equilibration phase.}
+  \item{atomsASamp}{Number of atoms in \eqn{{\bf{A}}} during each iteration of the sampling phase.}
+  \item{atomsPEquil}{Number of atoms in \eqn{{\bf{P}}} during each iteration of the equilibration phase.}
+  \item{atomsPSamp}{Number of atoms in \eqn{{\bf{P}}} during each iteration of the sampling phase.}
+  \item{chiSqValues}{Value of \eqn{chi^2} at each step during equilibration and sampling.} 
+  \item{meanChi2}{Value of \eqn{chi^2} for Amean and Pmean.}
+}
+
+\examples{
+\dontrun{
+## Load data
+nIter <- 5000
+
+## Run GAPS matrix decomposition with gene set statistic
+results <- CoGAPS(data=SimpSim.D, unc=SimpSim.S,
+                  GStoGenes=GSets,
+                  nFactor=3,
+                  nEquil=nIter, nSample=nIter,
+                  plot=FALSE)
+
+
+## Plot the results
+plotGAPS(results$Amean, results$Pmean, 'GSFigs')
+}
+}
+
+\seealso{\code{\link{gapsRun}},\code{\link{calcCoGAPSStat}}}
+\keyword{misc}

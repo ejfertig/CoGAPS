@@ -18,7 +18,7 @@ gapsMapRun(D, S, FP, nFactor = "7", simulation_id = "simulation",
 
 \item{S}{uncertainty matrix (std devs for chi-squared of Log Likelihood)}
 
-\item{FP}{data.frame with rows giving fixed patterns for P}
+\item{FP}{matrix with rows giving fixed patterns for P}
 
 \item{nFactor}{number of patterns (basis vectors, metagenes), which must be
 greater than or equal to the number of rows of FP}
@@ -55,4 +55,43 @@ matrix factorization returning the two matrices that reconstruct
 the data matrix; as opposed to gapsRun, this method takes an
 additional input specifying set patterns in the P matrix
 }
+
+\details{The decomposition in GAPS is achieved by finding amplitude and pattern matrices (\eqn{{\bf{A}}} and \eqn{{\bf{P}}}, respectively) for which \deqn{{\bf{D}} = {\bf{A}}{\bf{P}} + \Sigma}, where \eqn{\Sigma} is the matrix of uncertainties given by S.  The matrices \eqn{\bf{A}} and \eqn{\bf{P}} are assumed to have the atomic prior described in Sibisi and Skilling (1997) and are found with MCMC sampling. However, some rows of \eqn{\bf{P}} are fixed to be the values specified in the input argument \code{FP} after rescaling to have norm 1.}
+
+\value{
+  A list containing:
+  \item{Amean}{Sampled mean value of the amplitude matrix \eqn{{\bf{A}}}.}
+  \item{Asd}{Sampled standard deviation of the amplitude matrix \eqn{{\bf{A}}}.}
+  \item{Pmean}{Sampled mean value of the amplitude matrix \eqn{{\bf{P}}}.}
+  \item{Psd}{Sampled standard deviation of the amplitude matrix \eqn{{\bf{P}}}.}
+  \item{atomsAEquil}{Number of atoms in \eqn{{\bf{A}}} during each iteration of the equilibration phase.}
+  \item{atomsASamp}{Number of atoms in \eqn{{\bf{A}}} during each iteration of the sampling phase.}
+  \item{atomsPEquil}{Number of atoms in \eqn{{\bf{P}}} during each iteration of the equilibration phase.}
+  \item{atomsPSamp}{Number of atoms in \eqn{{\bf{P}}} during each iteration of the sampling phase.}
+  \item{chiSqValues}{Value of \eqn{chi^2} at each step during equilibration and sampling.} 
+  \item{meanChi2}{Value of \eqn{chi^2} for Amean and Pmean.}
+}
+
+\examples{
+\dontrun{
+## Load data
+data('SimpSim')
+
+## Specify the fixed pattern
+mapP <- matrix(0,nrow=2,ncol=20)
+mapP[1,1:10] <- 1
+mapP[2,11:20] <- 1
+
+## Run the GAPS matrix decomposition
+testmap <- gapsMapRun(SimpSim.D, SimpSim.S, FP=mapP, 
+                      nFactor=3,nEquil = 1000,nSample = 1000)
+
+
+## Compare fixed patterns to input patterns (after scaling)
+summary(t(testmap$Pmean[2:3,] - sweep(mapP,1,apply(mapP,1,sum),FUN="/")))
+}
+}
+
+\seealso{\code{\link{CoGAPS}},\code{\link{gapsRun}}}
+\keyword{misc}
 
